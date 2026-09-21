@@ -231,7 +231,7 @@ const OKOK = [
   ['mind',  'Mindkettő'],
   ['egyik', 'Egyik sem — csak tippeltem']
 ];
-let i = 0, nev = '', valasz = {}, kezdet = null, qkezdet = null, vissza = {};
+let i = 0, nev = '', valasz = {}, kezdet = null, qkezdet = null, viszSzoveg = {};
 
 /* ---- SZAKASZOK: négy tízes blokk ---- */
 const SZAKASZ = [
@@ -261,11 +261,11 @@ function szakaszIdx(k){
 const T = 'nosalty_kereso_teszt_v1';
 try { const m = localStorage.getItem(T);
       if (m) { const p = JSON.parse(m); valasz = p.valasz || {}; nev = p.nev || '';
-               kezdet = p.kezdet || null; vissza = p.vissza || {}; } } catch(e){}
+               kezdet = p.kezdet || null; viszSzoveg = p.vissza || {}; } } catch(e){}
 
 /* Minden kattintás után azonnal ment — több rétegben, hogy ne vesszen el. */
 function ment(){
-  const cs = JSON.stringify({nev, valasz, vissza, kezdet, ido:Date.now(), v:2});
+  const cs = JSON.stringify({nev, valasz, vissza: viszSzoveg, kezdet, ido:Date.now(), v:2});
   try { localStorage.setItem(T, cs); } catch(e){
     try { sessionStorage.setItem(T, cs); } catch(e2){}
   }
@@ -276,7 +276,7 @@ let viszIdozito = null;
 function viszMent(n){
   const e = document.getElementById('viszmezo');
   if (!e) return;
-  vissza[n] = e.value;
+  viszSzoveg[n] = e.value;
   clearTimeout(viszIdozito);
   viszIdozito = setTimeout(ment, 400);
 }
@@ -315,7 +315,7 @@ function szunetMutat(n){
        'ami nem fért bele a Jó/Nem válaszba. Nem kötelező.</div>' +
        '<textarea class="vissza-mezo" id="viszmezo" ' +
        'placeholder="Pl. „a képek sokat számítottak", „a 4-5. találat mindig gyengébb volt"…"' +
-       '" oninput="viszMent(' + n + ')">' + esc(vissza[n] || '') + '</textarea></div>';
+       '" oninput="viszMent(' + n + ')">' + esc(viszSzoveg[n] || '') + '</textarea></div>';
   h += '<button class="fogomb" onclick="szunetTovabb()">Folytatom</button>';
   h += '<p style="margin-top:18px;font-size:13px;color:var(--subtle)">' +
        'Ha most abbahagynád, bezárhatod az oldalt — a válaszaid megmaradnak.</p>';
@@ -338,13 +338,13 @@ function vege(){
   document.getElementById('lablec').classList.add('rejt');
   document.getElementById('vege').classList.remove('rejt');
   const m = document.getElementById('viszmezo_vege');
-  if (m && vissza.vege) m.value = vissza.vege;
+  if (m && viszSzoveg.vege) m.value = viszSzoveg.vege;
   window.scrollTo({top:0});
 }
 function viszMentVege(){
   const e = document.getElementById('viszmezo_vege');
   if (!e) return;
-  vissza.vege = e.value;
+  viszSzoveg.vege = e.value;
   clearTimeout(viszIdozito);
   viszIdozito = setTimeout(ment, 400);
 }
@@ -502,7 +502,7 @@ function osszeallit(){
     ok: okok,                               // query-id -> döntés oka
     klikk: klikk,                           // query-id -> melyiket nyitná meg (0 = egyiket sem)
     mp: mp,                                 // query-id -> eltöltött másodperc
-    vissza: vissza                          // szakasz-index (0,1,2) és 'vege' -> szöveg
+    vissza: viszSzoveg                      // szakasz-index (0,1,2) és 'vege' -> szöveg
   };
 }
 
@@ -525,7 +525,7 @@ async function bekuld(){
         kesz_kerdes: adat.keszult + ' / ' + A.length,
         eltoltott_perc: adat.percek,
         SZOVEGES_VISSZAJELZES: [0,1,2,'vege']
-          .map(k => (vissza[k]||'').trim())
+          .map(k => (viszSzoveg[k]||'').trim())
           .filter(x => x)
           .join('\n---\n') || '(nincs)',
         VALASZOK_JSON: JSON.stringify(adat)
