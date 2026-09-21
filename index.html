@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Nosalty kereső — találati minőség teszt</title>
+<style>
+  :root{
+    --teal:#278090; --text:#4f4f4f; --meta:#a18f7a; --subtle:#979797;
+    --base:#fff; --muted:#f8f8f8; --warm:#f1f0e9; --line:#dcd7d1;
+    --zold:#2e7d32; --zoldbg:#e8f5e9; --piros:#c62828; --pirosbg:#ffebee;
+    --pp:'Poppins',system-ui,-apple-system,sans-serif;
+    --ss:'Source Serif 4',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--warm);color:var(--text);
+       font-family:var(--pp);font-size:15px;line-height:1.5}
+  .wrap{max-width:860px;margin:0 auto;padding:0 16px 120px}
+
+  /* ---- fejlec ---- */
+  header{background:var(--base);border-bottom:1px solid var(--line);
+         position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(229,229,229,.6)}
+  .hin{max-width:860px;margin:0 auto;padding:12px 16px;
+       display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .logo{font-family:var(--ss);font-size:19px;color:var(--teal);font-weight:600}
+  .halad{flex:1;min-width:160px}
+  .savkulso{height:8px;background:var(--muted);border-radius:9999px;overflow:hidden}
+  .savbelso{height:100%;background:var(--teal);width:0;transition:width .25s}
+  .haladszam{font-size:12px;color:var(--subtle);margin-top:3px}
+
+  /* ---- bevezeto ---- */
+  .bev{background:var(--base);border:1px solid var(--line);border-radius:8px;
+       padding:24px;margin:24px 0}
+  .bev h1{font-family:var(--ss);font-weight:400;font-size:26px;margin:0 0 12px;
+          color:var(--text);line-height:1.25}
+  .bev p{margin:0 0 12px;max-width:62ch}
+  .bev ol{margin:0 0 16px;padding-left:22px}
+  .bev li{margin-bottom:6px}
+  .nevmezo{display:block;width:100%;max-width:320px;padding:10px 12px;
+           border:1px solid var(--line);border-radius:8px;font-family:var(--pp);
+           font-size:16px;margin:4px 0 16px;background:var(--muted)}
+
+  /* ---- kerdes ---- */
+  .kerdes{background:var(--base);border:1px solid var(--line);border-radius:8px;
+          padding:20px;margin:20px 0}
+  .kszam{font-size:11px;font-weight:500;letter-spacing:1.2px;
+         text-transform:uppercase;color:var(--meta);margin-bottom:6px}
+  .kszoveg{font-family:var(--ss);font-size:24px;line-height:1.2;margin:0 0 4px}
+  .kalcim{font-size:13px;color:var(--subtle);margin-bottom:18px}
+
+  /* ---- talalatok ---- */
+  .tal{display:flex;gap:14px;padding:12px;border:1px solid var(--line);
+       border-radius:8px;margin-bottom:10px;align-items:flex-start;
+       transition:border-color .15s,background .15s}
+  .tal.jo{border-color:var(--zold);background:var(--zoldbg)}
+  .tal.nem{border-color:var(--piros);background:var(--pirosbg)}
+  .tal img{width:92px;height:92px;object-fit:cover;border-radius:8px;
+           background:#e2eaea;flex-shrink:0}
+  .talkozep{flex:1;min-width:0}
+  .talpoz{font-size:11px;color:var(--subtle);margin-bottom:2px}
+  .talnev{font-family:var(--ss);font-size:17px;line-height:1.25;margin-bottom:6px}
+  .talmeta{font-size:12px;color:var(--meta)}
+  .gombok{display:flex;gap:8px;flex-shrink:0}
+  .gomb{padding:8px 16px;border:1px solid var(--line);background:var(--base);
+        border-radius:9999px;font-family:var(--pp);font-size:14px;
+        cursor:pointer;color:var(--text);white-space:nowrap}
+  .gomb:hover{background:var(--muted)}
+  .gomb.akt-jo{background:var(--zold);border-color:var(--zold);color:#fff}
+  .gomb.akt-nem{background:var(--piros);border-color:var(--piros);color:#fff}
+
+  /* ---- zaro kerdes ---- */
+  .zaro{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .zarocim{font-size:14px;font-weight:500;margin-bottom:10px}
+  .valaszok{display:flex;gap:8px;flex-wrap:wrap}
+  .vgomb{padding:8px 16px;border:1px solid var(--line);background:var(--base);
+         border-radius:9999px;font-family:var(--pp);font-size:14px;
+         cursor:pointer;color:var(--text)}
+  .vgomb:hover{background:var(--muted)}
+  .vgomb.akt{background:var(--teal);border-color:var(--teal);color:#fff}
+
+  /* ---- lablec ---- */
+  .lab{position:fixed;bottom:0;left:0;right:0;background:var(--base);
+       border-top:1px solid var(--line);padding:12px 16px;z-index:20}
+  .labin{max-width:860px;margin:0 auto;display:flex;gap:12px;
+         align-items:center;justify-content:space-between}
+  .fogomb{padding:12px 28px;background:var(--teal);color:#fff;border:none;
+          border-radius:9999px;font-family:var(--pp);font-size:15px;
+          font-weight:500;cursor:pointer}
+  .fogomb:disabled{background:var(--subtle);cursor:not-allowed}
+  .masodgomb{padding:12px 20px;background:var(--base);color:var(--text);
+             border:1px solid var(--line);border-radius:9999px;
+             font-family:var(--pp);font-size:15px;cursor:pointer}
+  .allapot{font-size:13px;color:var(--subtle)}
+
+  /* ---- szakasz-szunet ---- */
+  .szunet{background:var(--base);border:1px solid var(--line);border-radius:8px;
+          padding:32px 28px;margin:24px 0;text-align:center}
+  .szunet .ikon{font-size:40px;line-height:1;margin-bottom:12px}
+  .szunet h2{font-family:var(--ss);font-weight:400;font-size:26px;margin:0 0 10px;
+             line-height:1.25}
+  .szunet p{margin:0 auto 20px;max-width:46ch;color:var(--subtle)}
+  .szunetsav{max-width:340px;margin:0 auto 22px}
+  .pontok{display:flex;gap:6px;justify-content:center;margin-bottom:8px}
+  .pont{width:38px;height:6px;border-radius:9999px;background:var(--muted)}
+  .pont.kesz{background:var(--teal)}
+  .pont.most{background:var(--meta)}
+
+  /* ---- szakasz-jelzo a fejlecben ---- */
+  .szakaszcim{font-size:11px;font-weight:500;letter-spacing:1.2px;
+              text-transform:uppercase;color:var(--meta);margin-bottom:3px}
+
+  /* ---- vege ---- */
+  .vege{background:var(--base);border:1px solid var(--line);border-radius:8px;
+        padding:28px;margin:24px 0;text-align:center}
+  .vege h2{font-family:var(--ss);font-weight:400;font-size:26px;margin:0 0 12px}
+  .rejt{display:none}
+  @media(max-width:560px){
+    .tal{flex-wrap:wrap}
+    .gombok{width:100%;justify-content:flex-start}
+    .tal img{width:72px;height:72px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hin">
+    <span class="logo">Nosalty kereső — teszt</span>
+    <div class="halad">
+      <div class="szakaszcim" id="szakaszcim"></div>
+      <div class="savkulso"><div class="savbelso" id="sav"></div></div>
+      <div class="haladszam" id="haladszam">még nem kezdted el</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- BEVEZETŐ -->
+  <div id="bevezeto" class="bev">
+    <h1>Segíts megítélni a Nosalty keresőjét</h1>
+    <p>Negyven valódi keresést mutatunk, ahogy a felhasználók beírták. Mindegyiknél
+       az első öt találat látszik — ugyanaz, amit a kereső ad.</p>
+    <ol>
+      <li>Képzeld el, hogy <strong>te írtad be</strong> azt a keresőszót.</li>
+      <li>Minden találatnál dönts: <strong>jó</strong> lenne-e neked, vagy <strong>nem</strong>.</li>
+      <li>A végén egy kérdés: mi alapján döntöttél.</li>
+    </ol>
+    <p>Nincs jó vagy rossz válasz — a te ítéleted érdekel minket.
+       Kb. <strong>15–20 perc</strong>, négy rövid szakaszban.</p>
+    <p style="background:#f0fbfb;border:1px solid #82d7de;border-radius:8px;
+              padding:12px;font-size:14px">
+      <strong>Nyugodtan félbehagyhatod.</strong> Minden válaszod azonnal
+      mentődik ebben a böngészőben — ha bezárod és később visszatérsz
+      ugyanerre a linkre, onnan folytathatod, ahol abbahagytad.</p>
+    <label for="nev" style="font-size:14px;font-weight:500">Becenév vagy monogram:</label>
+    <input type="text" id="nev" class="nevmezo" placeholder="pl. Panni, K.A., Szerkesztő1"
+           autocomplete="off" maxlength="30">
+    <p style="font-size:13px;color:var(--subtle);margin:-8px 0 16px">
+      Nem gyűjtünk személyes adatot. Ez csak arra szolgál, hogy a válaszokat
+      meg tudjuk különböztetni egymástól — nem kell valódi név.</p>
+    <button class="fogomb" onclick="indit()">Kezdjük</button>
+  </div>
+
+  <!-- KÉRDÉS -->
+  <div id="kerdes" class="rejt"></div>
+
+  <!-- SZAKASZ-SZÜNET -->
+  <div id="szunet" class="rejt szunet"></div>
+
+  <!-- VÉGE -->
+  <div id="vege" class="rejt vege">
+    <h2>Köszönjük!</h2>
+    <p id="vegeszoveg">Végigmentél mind a 40 keresésen. Küldd el a válaszaidat
+       egy kattintással.</p>
+    <div id="kuldesdoboz">
+      <button class="fogomb" id="kuldgomb" onclick="bekuld()">Válaszok elküldése</button>
+    </div>
+    <div id="visszajelzes" class="rejt" style="margin-top:16px"></div>
+    <p style="margin-top:24px;font-size:13px;color:var(--subtle)">
+      Ha az elküldés nem sikerül,
+      <a href="#" onclick="letolt();return false" style="color:var(--teal)">töltsd le
+      a válaszokat fájlba</a> és küldd el emailben.</p>
+  </div>
+</div>
+
+<!-- LÁBLÉC -->
+<div id="lablec" class="lab rejt">
+  <div class="labin">
+    <button class="masodgomb" onclick="vissza()" id="visszagomb">Vissza</button>
+    <span class="allapot" id="allapot"></span>
+    <button class="fogomb" onclick="tovabb()" id="tovabbgomb">Tovább</button>
+  </div>
+</div>
+
+<script>
+window.TESZT_ADAT = [{"id": 1, "query": "csirkemell", "volumen": 1121, "tipus": "ALAPANYAG", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Legszaftosabb roston sült csirkemell", "slug": "legszaftosabb-roston-csirkemell", "kep": "https://image-api.nosalty.hu/images/recipes/3d/c0/legszaftosabb-roston-csirkemell.jpeg?w=320", "video": true, "hozzavalo": 9}, {"poz": 2, "nev": "Egyszerű fokhagymás-mustáros csirkemell", "slug": "egyszeru-fokhagymas-mustaros-csirkemell", "kep": "https://image-api.nosalty.hu/images/recipes/Ze/lX/egyszeru-fokhagymas-mustaros-csirkemell.jpg?w=320", "video": true, "hozzavalo": 7}, {"poz": 3, "nev": "Florentin csirkemell krémes, spenótos-fehérboros mártással", "slug": "florentin-csirkemell-kremes-feherboros-martassal", "kep": "https://image-api.nosalty.hu/images/recipes/bS/7J/florentin-csirkemell-kremes-feherboros-martassal.jpg?w=320", "video": false, "hozzavalo": 13}, {"poz": 4, "nev": "Sült csirkemell burgonyapürével, kéksajtos mártással és petrezselyemolajjal", "slug": "roston-sult-csirkemell-burgonyapure-keksajtmartas-petrezselyemolaj", "kep": "https://image-api.nosalty.hu/images/recipes/HE/qQ/roston-sult-csirkemell-burgonyapure-keksajtmartas-petrezselyemolaj.jpeg?w=320", "video": true, "hozzavalo": 16}, {"poz": 5, "nev": "Ínyenc csirkemell", "slug": "inyenc-csirkemell", "kep": "https://image-api.nosalty.hu/images/recipes/9J/X0/inyenc-csirkemell.jpeg?w=320", "video": false, "hozzavalo": 12}]}, {"id": 2, "query": "csirke", "volumen": 762, "tipus": "ALAPANYAG", "sav": "fej", "talalatok": [{"poz": 1, "nev": "20 perces teriyaki csirke", "slug": "20-perces-teriyaki-csirke", "kep": "https://image-api.nosalty.hu/images/recipes/Un/WI/20-perces-teriyaki-csirke.jpeg?w=320", "video": false, "hozzavalo": 16}, {"poz": 2, "nev": "A tökéletes hawaii csirke", "slug": "tokeletes-hawaii-csirke-recept", "kep": "https://image-api.nosalty.hu/images/recipes/ke/02/tokeletes-hawaii-csirke-recept.jpg?w=320", "video": true, "hozzavalo": 9}, {"poz": 3, "nev": "Krémes citromos serpenyős csirke", "slug": "kremes-citromos-fokhagymas-serpenyos-csirke", "kep": "https://image-api.nosalty.hu/images/recipes/LQ/zi/kremes-citromos-fokhagymas-serpenyos-csirke.jpg?w=320", "video": false, "hozzavalo": 12}, {"poz": 4, "nev": "Piri-piri csirke", "slug": "piri-piri-csirke-peri-peri", "kep": "https://image-api.nosalty.hu/images/recipes/8s/0p/piri-piri-csirke-peri-peri.jpg?w=320", "video": false, "hozzavalo": 12}, {"poz": 5, "nev": "\"Gyere hozzám feleségül\" csirke", "slug": "marry-me-chicken-gyere-hozzam-felesegul-csirke", "kep": "https://image-api.nosalty.hu/images/recipes/uK/lS/marry-me-chicken-gyere-hozzam-felesegul-csirke.jpg?w=320", "video": false, "hozzavalo": 12}]}, {"id": 3, "query": "muffin", "volumen": 683, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "A legegyszerűbb muffin alaprecept", "slug": "egyszeru-muffin-alaprecept", "kep": "https://image-api.nosalty.hu/images/recipes/FK/E4/egyszeru-muffin-alaprecept.jpeg?w=320", "video": true, "hozzavalo": 11}, {"poz": 2, "nev": "Csodás csokis muffin", "slug": "csodas-csokis-muffin", "kep": "https://image-api.nosalty.hu/images/recipes/V5/8F/csodas-csokis-muffin.jpg?w=320", "video": true, "hozzavalo": 8}, {"poz": 3, "nev": "Újragondolt vakondtúrás muffin", "slug": "vakondturas-muffin-ujragondolt", "kep": "https://image-api.nosalty.hu/images/recipes/Kw/4M/vakondturas-muffin-ujragondolt.jpeg?w=320", "video": true, "hozzavalo": 12}, {"poz": 4, "nev": "Bögrés cseresznyés muffin", "slug": "bogres-cseresznyes-muffin", "kep": "https://image-api.nosalty.hu/images/recipes/JJ/7t/bogres-cseresznyes-muffin.jpg?w=320", "video": true, "hozzavalo": 10}, {"poz": 5, "nev": "Brownie-muffin", "slug": "brownie-muffinok", "kep": "https://image-api.nosalty.hu/images/recipes/JF/u5/brownie-muffinok.jpg?w=320", "video": true, "hozzavalo": 13}]}, {"id": 4, "query": "szelet", "volumen": 588, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Japán szelet", "slug": "japan-szelet", "kep": "https://image-api.nosalty.hu/images/recipes/AM/VD/japan-szelet.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 2, "nev": "Zserbó szelet 1.", "slug": "zserbo-szelet-1", "kep": "https://image-api.nosalty.hu/images/recipes/pn/Fj/zserbo-szelet-1.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 3, "nev": "Flóra-szelet, azaz millionaire-, másnéven államcsőd-szelet", "slug": "flora-szelt-azaz-allamcsod-vagy-millionaire-szelet", "kep": "https://image-api.nosalty.hu/images/recipes/d0/LH/flora-szelt-azaz-allamcsod-vagy-millionaire-szelet.jpg?w=320", "video": false, "hozzavalo": 23}, {"poz": 4, "nev": "Duhaj-szelet (Benedek-szelet)", "slug": "duhaj-szelet-benedek-szelet", "kep": "https://image-api.nosalty.hu/images/recipes/pQ/dy/duhaj-szelet-benedek-szelet.jpg?w=320", "video": false, "hozzavalo": 16}, {"poz": 5, "nev": "Amerikai szelet", "slug": "amerikai-szelet", "kep": "https://image-api.nosalty.hu/images/recipes/R5/PE/amerikai-szelet.jpeg?w=320", "video": false, "hozzavalo": 12}]}, {"id": 5, "query": "palacsinta", "volumen": 572, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Aranygaluska-palacsinta", "slug": "aranygaluska-palacsinta", "kep": "https://image-api.nosalty.hu/images/recipes/vz/Fu/aranygaluska-palacsinta.jpg?w=320", "video": false, "hozzavalo": 14}, {"poz": 2, "nev": "Minden jóval csúsztatott palacsinta", "slug": "minden-joval-csusztatott-palacsinta", "kep": "https://image-api.nosalty.hu/images/recipes/3K/22/minden-joval-csusztatott-palacsinta.jpeg?w=320", "video": true, "hozzavalo": 11}, {"poz": 3, "nev": "Crêpes Suzette, azaz Zsuzsi palacsintája", "slug": "crepes-suzette-palacsinta-narancs-karamell", "kep": "https://image-api.nosalty.hu/images/recipes/Ks/Bd/crepes-suzette-palacsinta-narancs-karamell.jpg?w=320", "video": true, "hozzavalo": 11}, {"poz": 4, "nev": "Egyszerű vegán palacsinta", "slug": "egyszeru-vegan-palacsinta", "kep": "https://image-api.nosalty.hu/images/recipes/x8/ks/egyszeru-vegan-palacsinta.jpg?w=320", "video": false, "hozzavalo": 7}, {"poz": 5, "nev": "Kapros-túrós palacsinta", "slug": "kapor-turo-palacsinta", "kep": "https://image-api.nosalty.hu/images/recipes/DZ/1v/kapor-turo-palacsinta.jpeg?w=320", "video": true, "hozzavalo": 9}]}, {"id": 6, "query": "epres", "volumen": 465, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Epres krém", "slug": "epres-krem", "kep": "https://image-api.nosalty.hu/images/recipes/Cg/z2/epres-krem.jpeg?w=320", "video": false, "hozzavalo": 4}, {"poz": 2, "nev": "Epres túróhab", "slug": "epres-turohab", "kep": "https://image-api.nosalty.hu/images/recipes/Fb/gt/epres-turohab.jpeg?w=320", "video": false, "hozzavalo": 5}, {"poz": 3, "nev": "Epres  krémes", "slug": "epres-kremes", "kep": "https://image-api.nosalty.hu/images/recipes/1Q/uj/epres-kremes.jpeg?w=320", "video": false, "hozzavalo": 5}, {"poz": 4, "nev": "Epres turmix", "slug": "epres-turmix", "kep": "https://image-api.nosalty.hu/images/recipes/X0/oW/epres-turmix.jpeg?w=320", "video": false, "hozzavalo": 5}, {"poz": 5, "nev": "Epres malpura", "slug": "epres-malpura", "kep": "https://image-api.nosalty.hu/images/recipes/ST/W5/epres-malpura.jpeg?w=320", "video": false, "hozzavalo": 8}]}, {"id": 7, "query": "tarja", "volumen": 294, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Alpesi tarja", "slug": "alpesi-tarja", "kep": "https://image-api.nosalty.hu/images/recipes/i5/Om/alpesi-tarja.jpeg?w=320", "video": true, "hozzavalo": 8}, {"poz": 2, "nev": "Amerikai szaftos tarja", "slug": "amerikai-szaftos-tarja", "kep": "https://image-api.nosalty.hu/images/recipes/Qe/7R/amerikai-szaftos-tarja.jpeg?w=320", "video": true, "hozzavalo": 8}, {"poz": 3, "nev": "Cirmos tarja", "slug": "cirmos-tarja", "kep": "https://image-api.nosalty.hu/images/recipes/OL/xx/cirmos-tarja.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 4, "nev": "Tarja ünneplősen", "slug": "tarja-unneplosen", "kep": "https://image-api.nosalty.hu/images/recipes/QW/IC/tarja-unneplosen.jpeg?w=320", "video": false, "hozzavalo": 20}, {"poz": 5, "nev": "Olaszos tarja", "slug": "olaszos-tarja", "kep": "https://image-api.nosalty.hu/images/recipes/Ba/8f/olaszos-tarja.jpeg?w=320", "video": false, "hozzavalo": 16}]}, {"id": 8, "query": "gofri", "volumen": 290, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Gofri édesen", "slug": "az-igazi-belga-edes-gofri", "kep": "https://image-api.nosalty.hu/images/recipes/lq/zJ/az-igazi-belga-edes-gofri.jpeg?w=320", "video": true, "hozzavalo": 11}, {"poz": 2, "nev": "Croffle, az 5 perces, foszlós-ropogós croissant-gofri", "slug": "croffle-croissant-gofri", "kep": "https://image-api.nosalty.hu/images/recipes/T2/s4/croffle-croissant-gofri.jpeg?w=320", "video": false, "hozzavalo": 5}, {"poz": 3, "nev": "Kelt belga gofri (Gaufre de Liège)", "slug": "kelt-belga-gofri-gaufre-de-liege", "kep": "https://image-api.nosalty.hu/images/recipes/y3/4J/kelt-belga-gofri-gaufre-de-liege.jpg?w=320", "video": false, "hozzavalo": 9}, {"poz": 4, "nev": "Pizzás gofri sajttal", "slug": "pizzas-gofri-sajttal", "kep": "https://image-api.nosalty.hu/images/recipes/qA/kr/pizzas-gofri-sajttal.jpg?w=320", "video": false, "hozzavalo": 11}, {"poz": 5, "nev": "Gofri 2.", "slug": "gofri-2", "kep": "https://image-api.nosalty.hu/images/recipes/BG/98/gofri-2.jpeg?w=320", "video": false, "hozzavalo": 7}]}, {"id": 9, "query": "sajttorta", "volumen": 287, "tipus": "ÉTELNÉV", "sav": "fej", "talalatok": [{"poz": 1, "nev": "Klasszikus New York-i sajttorta", "slug": "klasszikus-new-york-i-sajttorta", "kep": "https://image-api.nosalty.hu/images/recipes/ij/Qy/klasszikus-new-york-i-sajttorta.jpg?w=320", "video": true, "hozzavalo": 12}, {"poz": 2, "nev": "A legtutibb vegán sajttorta", "slug": "vegan-protein-sajttorta-cukormentes", "kep": "https://image-api.nosalty.hu/images/recipes/Jw/lV/vegan-protein-sajttorta-cukormentes.jpg?w=320", "video": true, "hozzavalo": 9}, {"poz": 3, "nev": "Mézeskalácsos sajttorta", "slug": "mezeskalacs-sajttorta", "kep": "https://image-api.nosalty.hu/images/recipes/3P/Lm/mezeskalacs-sajttorta.jpg?w=320", "video": false, "hozzavalo": 13}, {"poz": 4, "nev": "6 hozzávalós sajttortakocka", "slug": "6-hozzavalos-sajttorta-kocka", "kep": "https://image-api.nosalty.hu/images/recipes/TU/39/6-hozzavalos-sajttorta-kocka.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 5, "nev": "Legkrémesebb sajttorta", "slug": "legkremesebb-sajttorta", "kep": "https://image-api.nosalty.hu/images/recipes/ll/S3/legkremesebb-sajttorta.jpeg?w=320", "video": false, "hozzavalo": 8}]}, {"id": 10, "query": "rakott krumpli", "volumen": 155, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "A legszaftosabb rakott krumpli ropogós baconszórással", "slug": "a-legszaftosabb-rakott-krumpli-ropogos-baconszorassal", "kep": "https://image-api.nosalty.hu/images/recipes/9m/c7/a-legszaftosabb-rakott-krumpli-ropogos-baconszorassal.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 2, "nev": "Rakott krumpli rácosan", "slug": "rakott-krumpli-racosan", "kep": "https://image-api.nosalty.hu/images/recipes/Du/xa/rakott-krumpli-racosan.jpeg?w=320", "video": true, "hozzavalo": 12}, {"poz": 3, "nev": "Rakott újburgonya", "slug": "rakott-ujburgonya", "kep": "https://image-api.nosalty.hu/images/recipes/ae/DN/rakott-ujburgonya.jpg?w=320", "video": true, "hozzavalo": 7}, {"poz": 4, "nev": "Rakott krumpli", "slug": "rakott-krumpli", "kep": "https://image-api.nosalty.hu/images/recipes/q4/Bx/rakott-krumpli.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 5, "nev": "Medvehagymás rakott krumpli", "slug": "medvehagymas-rakott-krumpli", "kep": "https://image-api.nosalty.hu/images/recipes/cm/nc/medvehagymas-rakott-krumpli.jpeg?w=320", "video": false, "hozzavalo": 11}]}, {"id": 11, "query": "reggeli", "volumen": 123, "tipus": "SZŰRÉS", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "English breakfast, a fullos angol reggeli", "slug": "english-breakfast-a-fullos-angol-reggeli", "kep": "https://image-api.nosalty.hu/images/recipes/TE/wK/english-breakfast-a-fullos-angol-reggeli.jpeg?w=320", "video": true, "hozzavalo": 10}, {"poz": 2, "nev": "Brit reggeli", "slug": "brit-reggeli", "kep": "https://image-api.nosalty.hu/images/recipes/bJ/q9/brit-reggeli.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 3, "nev": "5 perces reggeli", "slug": "5-perces-reggeli", "kep": "https://image-api.nosalty.hu/images/recipes/vW/94/5-perces-reggeli.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 4, "nev": "Egyszerű angol reggeli", "slug": "egyszeru-angol-reggeli", "kep": "https://image-api.nosalty.hu/images/recipes/L8/Ie/egyszeru-angol-reggeli.jpeg?w=320", "video": true, "hozzavalo": 8}, {"poz": 5, "nev": "Angol reggeli", "slug": "angol-reggeli", "kep": "https://image-api.nosalty.hu/images/recipes/Aw/4u/angol-reggeli.jpeg?w=320", "video": false, "hozzavalo": 5}]}, {"id": 12, "query": "rakott karfiol", "volumen": 120, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Rakott karfiol", "slug": "rakott-karfiol", "kep": "https://image-api.nosalty.hu/images/recipes/SW/V4/rakott-karfiol.jpg?w=320", "video": true, "hozzavalo": 9}, {"poz": 2, "nev": "Rakott karfiol sajttal", "slug": "rakott-karfiol-sajttal", "kep": "https://image-api.nosalty.hu/images/recipes/Lf/LE/rakott-karfiol-sajttal.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 3, "nev": "Rakott karfiol", "slug": "rakott-karfiol-1", "kep": "https://image-api.nosalty.hu/images/recipes/LC/1G/rakott-karfiol-1.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 4, "nev": "Rakott karfiol 3.", "slug": "rakott-karfiol-3", "kep": "https://image-api.nosalty.hu/images/recipes/Ul/fa/rakott-karfiol-3.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 5, "nev": "Diétás rakott karfiol", "slug": "dietas-rakott-karfiol", "kep": "https://image-api.nosalty.hu/images/recipes/KM/aF/dietas-rakott-karfiol.jpeg?w=320", "video": false, "hozzavalo": 10}]}, {"id": 13, "query": "spenot", "volumen": 113, "tipus": "ALAPANYAG", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Vegán spenótfőzelék", "slug": "vegan-spenotfozelek", "kep": "https://image-api.nosalty.hu/images/recipes/qK/Ft/vegan-spenotfozelek.jpg?w=320", "video": true, "hozzavalo": 12}, {"poz": 2, "nev": "Spenót pesto", "slug": "spenot-pesto", "kep": "https://image-api.nosalty.hu/images/recipes/WC/Gv/spenot-pesto.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 3, "nev": "Szuperkrémes spenótfőzelék", "slug": "spenotfozelek", "kep": "https://image-api.nosalty.hu/images/recipes/yY/Ec/spenotfozelek.jpeg?w=320", "video": true, "hozzavalo": 8}, {"poz": 4, "nev": "Spenót saláta", "slug": "spenot-salata", "kep": "https://image-api.nosalty.hu/images/recipes/ZY/EJ/spenot-salata.jpeg?w=320", "video": false, "hozzavalo": 5}, {"poz": 5, "nev": "Spenót gombóc", "slug": "spenot-gomboc", "kep": "https://image-api.nosalty.hu/images/recipes/l7/Fx/spenot-gomboc.jpeg?w=320", "video": false, "hozzavalo": 10}]}, {"id": 14, "query": "kuglof", "volumen": 108, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Kávés kuglóf karamellszósszal", "slug": "kaves-kuglof-karamellszosszal", "kep": "https://image-api.nosalty.hu/images/recipes/2d/Bc/kaves-kuglof-karamellszosszal.jpeg?w=320", "video": true, "hozzavalo": 12}, {"poz": 2, "nev": "Kuglóf", "slug": "kuglof", "kep": "https://image-api.nosalty.hu/images/recipes/fe/kn/kuglof.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 3, "nev": "Duplacsokis kuglóf", "slug": "duplasokis-kuglof", "kep": "https://image-api.nosalty.hu/images/recipes/JQ/F5/duplasokis-kuglof.jpg?w=320", "video": true, "hozzavalo": 13}, {"poz": 4, "nev": "Bécsi kuglóf", "slug": "becsi-kuglof", "kep": "https://image-api.nosalty.hu/images/recipes/xW/5R/becsi-kuglof.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 5, "nev": "Funfetti kuglóf", "slug": "funfetti-kuglof-konfetti-DrOetker", "kep": "https://image-api.nosalty.hu/images/recipes/Nh/I6/funfetti-kuglof-konfetti-DrOetker.jpeg?w=320", "video": true, "hozzavalo": 13}]}, {"id": 15, "query": "desszert", "volumen": 89, "tipus": "SZŰRÉS", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Bounty desszert", "slug": "bounty-desszert", "kep": "https://image-api.nosalty.hu/images/recipes/0r/gi/bounty-desszert.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 2, "nev": "Arab desszert", "slug": "arab-desszert", "kep": "https://image-api.nosalty.hu/images/recipes/0Z/IE/arab-desszert.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 3, "nev": "Szezonváltó desszert", "slug": "szezonvalto-desszert", "kep": "https://image-api.nosalty.hu/images/recipes/1S/Jw/szezonvalto-desszert.jpeg?w=320", "video": false, "hozzavalo": 4}, {"poz": 4, "nev": "Szénhidrátcsökkentett vaníliás desszert", "slug": "szenhidratcsokkentett-vanilias-desszert", "kep": "https://image-api.nosalty.hu/images/recipes/hW/gA/szenhidratcsokkentett-vanilias-desszert.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 5, "nev": "Gesztenye desszert", "slug": "gesztenye-desszert", "kep": "https://image-api.nosalty.hu/images/recipes/QZ/TK/gesztenye-desszert.jpeg?w=320", "video": false, "hozzavalo": 6}]}, {"id": 16, "query": "tepertős pogácsa", "volumen": 84, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Tepertős pogácsa tejmentesen", "slug": "tepertos-pogacsa-tejmentesen", "kep": "https://image-api.nosalty.hu/images/recipes/GV/jn/tepertos-pogacsa-tejmentesen.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 2, "nev": "Tepertős pogácsa", "slug": "tepertos-pogacsa", "kep": "https://image-api.nosalty.hu/images/recipes/Sy/wU/tepertos-pogacsa.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 3, "nev": "Tepertős pogácsa Bessytől", "slug": "tepertos-pogacsa-bessytol", "kep": "https://image-api.nosalty.hu/images/recipes/kh/iL/tepertos-pogacsa-bessytol.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 4, "nev": "Tepertős pogácsa 9.", "slug": "tepertos-pogacsa-9", "kep": "https://image-api.nosalty.hu/images/recipes/PM/8J/tepertos-pogacsa-9.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 5, "nev": "Szegedi tepertős pogácsa", "slug": "szegedi-tepertos-pogacsa", "kep": "https://image-api.nosalty.hu/images/recipes/ts/JR/szegedi-tepertos-pogacsa.jpeg?w=320", "video": false, "hozzavalo": 9}]}, {"id": 17, "query": "kovaszos uborka", "volumen": 83, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Kovászos uborka keleties fűszerezéssel", "slug": "kovaszos-uborka-keleties-fuszerezessel", "kep": "https://image-api.nosalty.hu/images/recipes/4J/Ox/kovaszos-uborka-keleties-fuszerezessel.jpeg?w=320", "video": true, "hozzavalo": 10}, {"poz": 2, "nev": "Kovászos uborka egyszerűen", "slug": "kovaszos-uborka-egyszeruen", "kep": "https://image-api.nosalty.hu/images/recipes/UV/LQ/kovaszos-uborka-egyszeruen.jpeg?w=320", "video": true, "hozzavalo": 6}, {"poz": 3, "nev": "Ropogós kovászos uborka", "slug": "ropogos-kovaszos-uborka-0", "kep": "https://image-api.nosalty.hu/images/recipes/E2/GE/ropogos-kovaszos-uborka-0.jpg?w=320", "video": false, "hozzavalo": 10}, {"poz": 4, "nev": "Napon érlelt kovászos uborka", "slug": "napon-erlelt-kovaszos-uborka", "kep": "https://image-api.nosalty.hu/images/recipes/0N/ae/napon-erlelt-kovaszos-uborka.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 5, "nev": "Rántott kovászos uborka", "slug": "rantott-kovaszos-uborka", "kep": "https://image-api.nosalty.hu/images/recipes/nQ/0J/rantott-kovaszos-uborka.jpeg?w=320", "video": true, "hozzavalo": 7}]}, {"id": 18, "query": "paleo", "volumen": 75, "tipus": "SZŰRÉS", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Paleo kenyér", "slug": "paleo-kenyer", "kep": "https://image-api.nosalty.hu/images/recipes/vA/N4/paleo-kenyer.jpeg?w=320", "video": true, "hozzavalo": 9}, {"poz": 2, "nev": "Paleo paella", "slug": "paleo-paella", "kep": "https://image-api.nosalty.hu/images/recipes/wm/Ox/paleo-paella.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 3, "nev": "Paleo paella", "slug": "paleo-paella-0", "kep": "https://image-api.nosalty.hu/images/recipes/RA/2Z/paleo-paella-0.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 4, "nev": "Paleo szaloncukor", "slug": "paleo-szaloncukor", "kep": "https://image-api.nosalty.hu/images/recipes/3b/u0/paleo-szaloncukor.jpeg?w=320", "video": true, "hozzavalo": 6}, {"poz": 5, "nev": "Paleo répafőzelék", "slug": "paleo-repafozelek", "kep": "https://image-api.nosalty.hu/images/recipes/2Y/Kw/paleo-repafozelek.jpeg?w=320", "video": false, "hozzavalo": 10}]}, {"id": 19, "query": "kacsa", "volumen": 73, "tipus": "ALAPANYAG", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Narancsos kacsa gyökérzöldségekkel és selymes narancsmártással", "slug": "narancs-kacsa-ropogos-repa-burgonya-hagyma-narancsmartas", "kep": "https://image-api.nosalty.hu/images/recipes/1I/0a/narancs-kacsa-ropogos-repa-burgonya-hagyma-narancsmartas.jpg?w=320", "video": true, "hozzavalo": 16}, {"poz": 2, "nev": "Kólás kacsa", "slug": "kolas-kacsa", "kep": "https://image-api.nosalty.hu/images/recipes/FP/SL/kolas-kacsa.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 3, "nev": "Sörös kacsa", "slug": "soros-kacsa", "kep": "https://image-api.nosalty.hu/images/recipes/Hp/TZ/soros-kacsa.jpeg?w=320", "video": false, "hozzavalo": 21}, {"poz": 4, "nev": "Kacsa olaszosan", "slug": "kacsa-olaszosan", "kep": "https://image-api.nosalty.hu/images/recipes/5a/PS/kacsa-olaszosan.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 5, "nev": "Nyárson sült kacsa", "slug": "nyarson-sult-kacsa", "kep": "https://image-api.nosalty.hu/images/recipes/uU/NP/nyarson-sult-kacsa.jpeg?w=320", "video": false, "hozzavalo": 8}]}, {"id": 20, "query": "olasz", "volumen": 73, "tipus": "SZŰRÉS", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Olasz pizzavariációk", "slug": "cukkinis-padlizsanos-pizza", "kep": "https://image-api.nosalty.hu/images/recipes/7c/9o/cukkinis-padlizsanos-pizza.jpeg?w=320", "video": true, "hozzavalo": 16}, {"poz": 2, "nev": "Olasz sulikoszt", "slug": "olasz-sulikoszt", "kep": "https://image-api.nosalty.hu/images/recipes/hb/r8/olasz-sulikoszt.jpeg?w=320", "video": false, "hozzavalo": 16}, {"poz": 3, "nev": "Olasz zöldségleves", "slug": "olasz-zoldsegleves", "kep": "https://image-api.nosalty.hu/images/recipes/eo/NO/olasz-zoldsegleves.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 4, "nev": "Olasz serpenyő", "slug": "olasz-serpenyo", "kep": "https://image-api.nosalty.hu/images/recipes/RQ/rv/olasz-serpenyo.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 5, "nev": "Olasz lencseleves", "slug": "olasz-lencseleves", "kep": "https://image-api.nosalty.hu/images/recipes/j8/nc/olasz-lencseleves.jpeg?w=320", "video": true, "hozzavalo": 13}]}, {"id": 21, "query": "tonhalkrém", "volumen": 70, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Pikáns tonhalkrém", "slug": "pikans-tonhalkrem", "kep": "https://image-api.nosalty.hu/images/recipes/nu/SZ/pikans-tonhalkrem.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 2, "nev": "Tonhalkrém", "slug": "tonhalkrem", "kep": "https://image-api.nosalty.hu/images/recipes/6l/Zy/tonhalkrem.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 3, "nev": "Tonhalkrém chilisen", "slug": "tonhalkrem-chilisen", "kep": "https://image-api.nosalty.hu/images/recipes/xc/cz/tonhalkrem-chilisen.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 4, "nev": "Kukoricás tonhalkrém", "slug": "kukoricas-tonhalkrem", "kep": "https://image-api.nosalty.hu/images/recipes/Xt/dh/kukoricas-tonhalkrem.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 5, "nev": "Tonhalkrém besamellel", "slug": "tonhalkrem-besamellel", "kep": "https://image-api.nosalty.hu/images/recipes/Uc/Tb/tonhalkrem-besamellel.jpeg?w=320", "video": false, "hozzavalo": 9}]}, {"id": 22, "query": "töltött gomba", "volumen": 64, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Grillezett töltött gomba", "slug": "grillezett-toltott-gomba", "kep": "https://image-api.nosalty.hu/images/recipes/vT/wp/grillezett-toltott-gomba.jpeg?w=320", "video": true, "hozzavalo": 7}, {"poz": 2, "nev": "Baconös krémsajtos töltött gomba", "slug": "baconos-kremsajtos-toltott-gomba", "kep": "https://image-api.nosalty.hu/images/recipes/Md/pk/baconos-kremsajtos-toltott-gomba.jpg?w=320", "video": true, "hozzavalo": 10}, {"poz": 3, "nev": "Töltött gomba", "slug": "toltott-gomba", "kep": "https://image-api.nosalty.hu/images/recipes/SB/Y3/toltott-gomba.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 4, "nev": "Töltött-rántott gomba", "slug": "toltott-rantott-gomba", "kep": "https://image-api.nosalty.hu/images/recipes/BV/os/toltott-rantott-gomba.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 5, "nev": "Töltött gomba 3.", "slug": "toltott-gomba-3", "kep": "https://image-api.nosalty.hu/images/recipes/f6/zj/toltott-gomba-3.jpeg?w=320", "video": false, "hozzavalo": 7}]}, {"id": 23, "query": "vacsora", "volumen": 55, "tipus": "SZŰRÉS", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Gyors wok-vacsora", "slug": "gyors-wok-vacsora", "kep": "https://image-api.nosalty.hu/images/recipes/G5/Aa/gyors-wok-vacsora.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 2, "nev": "Könnyű wok-vacsora 2.", "slug": "konnyu-wok-vacsora-2", "kep": "https://image-api.nosalty.hu/images/recipes/Sk/Ki/konnyu-wok-vacsora-2.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 3, "nev": "Indonéz vacsora", "slug": "indonez-vacsora", "kep": "https://image-api.nosalty.hu/images/recipes/hE/N8/indonez-vacsora.jpeg?w=320", "video": false, "hozzavalo": 26}, {"poz": 4, "nev": "Vacsora wrap", "slug": "vacsora-wrap", "kep": "https://image-api.nosalty.hu/images/recipes/Y4/WL/vacsora-wrap.jpeg?w=320", "video": false, "hozzavalo": 16}, {"poz": 5, "nev": "Székely vacsora", "slug": "szekely-vacsora", "kep": "https://image-api.nosalty.hu/images/recipes/f2/K3/szekely-vacsora.jpeg?w=320", "video": false, "hozzavalo": 7}]}, {"id": 24, "query": "grízgaluska", "volumen": 40, "tipus": "ÉTELNÉV", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Petrezselymes grízgaluska", "slug": "petrezselymes-grizgaluska", "kep": "https://image-api.nosalty.hu/images/recipes/f9/5L/petrezselymes-grizgaluska.jpeg?w=320", "video": true, "hozzavalo": 4}, {"poz": 2, "nev": "Vajas grízgaluska", "slug": "vajas-grizgaluska", "kep": "https://image-api.nosalty.hu/images/recipes/vV/Rx/vajas-grizgaluska.jpeg?w=320", "video": false, "hozzavalo": 6}, {"poz": 3, "nev": "Pihe-puha grízgaluska", "slug": "pihe-puha-grizgaluska", "kep": "https://image-api.nosalty.hu/images/recipes/Fg/yG/pihe-puha-grizgaluska.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 4, "nev": "Grízgaluska a lá Anna", "slug": "grizgaluska-la-anna", "kep": "https://image-api.nosalty.hu/images/recipes/GK/L8/grizgaluska-la-anna.jpeg?w=320", "video": false, "hozzavalo": 4}, {"poz": 5, "nev": "Tyúkzsíros grízgaluska", "slug": "tyukzsiros-grizgaluska", "kep": "https://image-api.nosalty.hu/images/recipes/xp/qt/tyukzsiros-grizgaluska.jpeg?w=320", "video": false, "hozzavalo": 5}]}, {"id": 25, "query": "indiai", "volumen": 40, "tipus": "SZŰRÉS", "sav": "torzs", "talalatok": [{"poz": 1, "nev": "Indiai spenótos csirke (Saagwala)", "slug": "saagwala-indiai-spenotos-csirke", "kep": "https://image-api.nosalty.hu/images/recipes/Eh/9e/saagwala-indiai-spenotos-csirke.jpeg?w=320", "video": false, "hozzavalo": 21}, {"poz": 2, "nev": "Indiai zöldséggombóc", "slug": "indiai-zoldseggomboc-0", "kep": "https://image-api.nosalty.hu/images/recipes/0c/g5/indiai-zoldseggomboc-0.jpeg?w=320", "video": false, "hozzavalo": 17}, {"poz": 3, "nev": "Murgh makhani, azaz indiai vajas csirke", "slug": "murgh-makhani-azaz-indiai-vajas-csirke", "kep": "https://image-api.nosalty.hu/images/recipes/rX/hi/murgh-makhani-azaz-indiai-vajas-csirke.jpeg?w=320", "video": true, "hozzavalo": 20}, {"poz": 4, "nev": "Indiai babfőzelék", "slug": "indiai-babfozelek", "kep": "https://image-api.nosalty.hu/images/recipes/eQ/0K/indiai-babfozelek.jpeg?w=320", "video": true, "hozzavalo": 10}, {"poz": 5, "nev": "Indiai limonádé", "slug": "indiai-limonade", "kep": "https://image-api.nosalty.hu/images/recipes/JR/r9/indiai-limonade.jpeg?w=320", "video": false, "hozzavalo": 6}]}, {"id": 26, "query": "kakaós csiga", "volumen": 24, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Egyszerű kakaós csiga", "slug": "egyszeru-kakaos-csiga", "kep": "https://image-api.nosalty.hu/images/recipes/QW/4x/egyszeru-kakaos-csiga.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 2, "nev": "Kakaós csiga 2.", "slug": "kakaos-csiga-2", "kep": "https://image-api.nosalty.hu/images/recipes/WU/iW/kakaos-csiga-2.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 3, "nev": "Hétvégi kakaós csiga", "slug": "hetvegi-kakaos-csiga", "kep": "https://image-api.nosalty.hu/images/recipes/T4/DW/hetvegi-kakaos-csiga.jpeg?w=320", "video": true, "hozzavalo": 8}, {"poz": 4, "nev": "Vegán mini kakaós csigák", "slug": "mini-kakaos-csigak", "kep": "https://image-api.nosalty.hu/images/recipes/Rc/GI/mini-kakaos-csigak.jpeg?w=320", "video": true, "hozzavalo": 10}, {"poz": 5, "nev": "Kakaós csiga 7.", "slug": "kakaos-csiga-7", "kep": "https://image-api.nosalty.hu/images/recipes/BP/b8/kakaos-csiga-7.jpeg?w=320", "video": false, "hozzavalo": 10}]}, {"id": 27, "query": "pizza", "volumen": 22, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Pizzadog", "slug": "pizzadog", "kep": "https://image-api.nosalty.hu/images/recipes/34/XM/pizzadog.jpg?w=320", "video": false, "hozzavalo": 10}, {"poz": 2, "nev": "Rösztipizza", "slug": "roszti-pizza-kolbasz-mozzarella-paradicsom", "kep": "https://image-api.nosalty.hu/images/recipes/Ou/Lo/roszti-pizza-kolbasz-mozzarella-paradicsom.jpg?w=320", "video": false, "hozzavalo": 10}, {"poz": 3, "nev": "Pizza 2.", "slug": "pizza-2", "kep": "https://image-api.nosalty.hu/images/recipes/69/xP/pizza-2.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 4, "nev": "Pizza 6.", "slug": "pizza-6", "kep": "https://image-api.nosalty.hu/images/recipes/V7/QY/pizza-6.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 5, "nev": "Pizza 22.", "slug": "pizza-22", "kep": "https://image-api.nosalty.hu/images/recipes/RJ/yk/pizza-22.jpeg?w=320", "video": false, "hozzavalo": 22}]}, {"id": 28, "query": "amerikai káposztasaláta", "volumen": 19, "tipus": "SZŰRÉS", "sav": "farok", "talalatok": [{"poz": 1, "nev": "KFC-s amerikai káposztasaláta", "slug": "kfc-s-amerikai-kaposztasalata", "kep": "https://image-api.nosalty.hu/images/recipes/GB/A3/kfc-s-amerikai-kaposztasalata.jpeg?w=320", "video": true, "hozzavalo": 8}, {"poz": 2, "nev": "Amerikai káposztasaláta", "slug": "amerikai-kaposztasalata", "kep": "https://image-api.nosalty.hu/images/recipes/nm/gY/amerikai-kaposztasalata.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 3, "nev": "Amerikai káposztasaláta 1.", "slug": "amerikai-kaposztasalata-1", "kep": "https://image-api.nosalty.hu/images/recipes/oD/AI/amerikai-kaposztasalata-1.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 4, "nev": "Amerikai káposztasaláta 3.", "slug": "amerikai-kaposztasalata-3", "kep": "https://image-api.nosalty.hu/images/recipes/vm/up/amerikai-kaposztasalata-3.jpeg?w=320", "video": false, "hozzavalo": 5}, {"poz": 5, "nev": "Amerikai káposztasaláta 2.", "slug": "amerikai-kaposztasalata-2", "kep": "https://image-api.nosalty.hu/images/recipes/po/dQ/amerikai-kaposztasalata-2.jpeg?w=320", "video": false, "hozzavalo": 6}]}, {"id": 29, "query": "török", "volumen": 16, "tipus": "SZŰRÉS", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Török siskebab nyárson", "slug": "torok-siskebab-nyarson", "kep": "https://image-api.nosalty.hu/images/recipes/bB/vw/torok-siskebab-nyarson.jpeg?w=320", "video": true, "hozzavalo": 12}, {"poz": 2, "nev": "Török gyuvecs", "slug": "torok-gyuvecs", "kep": "https://image-api.nosalty.hu/images/recipes/NO/y5/torok-gyuvecs.jpeg?w=320", "video": false, "hozzavalo": 15}, {"poz": 3, "nev": "Török pizza 2.", "slug": "torok-pizza-2", "kep": "https://image-api.nosalty.hu/images/recipes/Qw/mt/torok-pizza-2.jpeg?w=320", "video": false, "hozzavalo": 18}, {"poz": 4, "nev": "Török vöröslencse-krémleves", "slug": "torok-voroslencse-kremleves", "kep": "https://image-api.nosalty.hu/images/recipes/5t/bY/torok-voroslencse-kremleves.jpeg?w=320", "video": true, "hozzavalo": 10}, {"poz": 5, "nev": "Török kisir", "slug": "torok-kisir", "kep": "https://image-api.nosalty.hu/images/recipes/Mi/88/torok-kisir.jpeg?w=320", "video": false, "hozzavalo": 9}]}, {"id": 30, "query": "cukkini fasirt", "volumen": 7, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Cukkini fasírt 4. - zabpelyhes", "slug": "cukkini-fasirt-4-zabpelyhes", "kep": "https://image-api.nosalty.hu/images/recipes/3O/tT/cukkini-fasirt-4-zabpelyhes.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 2, "nev": "Cukkini fasírt Évi néni konyhájából", "slug": "cukkini-fasirt-evi-neni-konyhajabol", "kep": "https://image-api.nosalty.hu/images/recipes/F9/Sh/cukkini-fasirt-evi-neni-konyhajabol.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 3, "nev": "Cukkini fasírt 5. - vegán", "slug": "cukkini-fasirt-5-vegan", "kep": "https://image-api.nosalty.hu/images/recipes/i7/Js/cukkini-fasirt-5-vegan.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 4, "nev": "Cukkini fasírt diétásan", "slug": "cukkini-fasirt-dietasan", "kep": "https://image-api.nosalty.hu/images/recipes/hz/db/cukkini-fasirt-dietasan.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 5, "nev": "Cukkini fasírt tojással töltve", "slug": "cukkini-fasirt-tojassal-toltve", "kep": "https://image-api.nosalty.hu/images/recipes/eU/WY/cukkini-fasirt-tojassal-toltve.jpeg?w=320", "video": false, "hozzavalo": 12}]}, {"id": 31, "query": "resztelt maj", "volumen": 6, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Resztelt pulykamáj vörösborosan", "slug": "resztelt-maj", "kep": "https://image-api.nosalty.hu/images/recipes/is/8X/resztelt-maj.jpeg?w=320", "video": true, "hozzavalo": 9}, {"poz": 2, "nev": "Egyszerű resztelt máj", "slug": "egyszeru-resztelt-maj", "kep": "https://image-api.nosalty.hu/images/recipes/GH/ra/egyszeru-resztelt-maj.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 3, "nev": "Resztelt máj sűrű szafttal", "slug": "resztelt-maj-suru-szafttal", "kep": "https://image-api.nosalty.hu/images/recipes/x7/xY/resztelt-maj-suru-szafttal.jpeg?w=320", "video": false, "hozzavalo": 14}, {"poz": 4, "nev": "Vörösboros resztelt máj", "slug": "vorosboros-resztelt-maj", "kep": "https://image-api.nosalty.hu/images/recipes/PS/rn/vorosboros-resztelt-maj.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 5, "nev": "Resztelt máj tejszínes-gombás rizzsel", "slug": "resztelt-maj-tejszines-gombas-rizzsel", "kep": "https://image-api.nosalty.hu/images/recipes/pt/mC/resztelt-maj-tejszines-gombas-rizzsel.jpeg?w=320", "video": false, "hozzavalo": 9}]}, {"id": 32, "query": "paleo brownie", "volumen": 4, "tipus": "SZŰRÉS", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Paleo brownie", "slug": "paleo-brownie", "kep": "https://image-api.nosalty.hu/images/recipes/1E/Uk/paleo-brownie.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 2, "nev": "Málnás paleo brownie", "slug": "malnas-paleo-brownie", "kep": "https://image-api.nosalty.hu/images/recipes/ef/i0/malnas-paleo-brownie.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 3, "nev": "Kókuszos paleo brownie", "slug": "kokuszos-paleo-brownie", "kep": "https://image-api.nosalty.hu/images/recipes/CA/wU/kokuszos-paleo-brownie.jpeg?w=320", "video": false, "hozzavalo": 6}, {"poz": 4, "nev": "Paleo körtés brownie", "slug": "paleo-kortes-brownie", "kep": "https://image-api.nosalty.hu/images/recipes/xY/MZ/paleo-kortes-brownie.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 5, "nev": "Paleo, gluténmentes epres brownie", "slug": "paleo-glutenmentes-epres-brownie", "kep": "https://image-api.nosalty.hu/images/recipes/n2/HS/paleo-glutenmentes-epres-brownie.jpeg?w=320", "video": false, "hozzavalo": 12}]}, {"id": 33, "query": "főzelék", "volumen": 2, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Savanykás sóskafőzelék", "slug": "savanykas-soskafozelek", "kep": "https://image-api.nosalty.hu/images/recipes/Yz/W3/savanykas-soskafozelek.jpg?w=320", "video": true, "hozzavalo": 9}, {"poz": 2, "nev": "Főzelék sütőben", "slug": "fozelek-sutoben", "kep": "https://image-api.nosalty.hu/images/recipes/8C/aD/fozelek-sutoben.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 3, "nev": "Édeskáposzta főzelék", "slug": "edeskaposzta-fozelek", "kep": "https://image-api.nosalty.hu/images/recipes/rV/Le/edeskaposzta-fozelek.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 4, "nev": "Medvehagyma főzelék", "slug": "medvehagyma-fozelek", "kep": "https://image-api.nosalty.hu/images/recipes/bs/FJ/medvehagyma-fozelek.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 5, "nev": "Sárgaborsó-főzelék", "slug": "sargaborso-fozelek", "kep": "https://image-api.nosalty.hu/images/recipes/GY/Wg/sargaborso-fozelek.jpg?w=320", "video": true, "hozzavalo": 10}]}, {"id": 34, "query": "magyar sütemény", "volumen": 2, "tipus": "SZŰRÉS", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Magyar szelet", "slug": "magyar-szelet", "kep": "https://image-api.nosalty.hu/images/recipes/M6/cW/magyar-szelet.jpeg?w=320", "video": false, "hozzavalo": 12}, {"poz": 2, "nev": "Magyar sütiszelet", "slug": "magyar-sutiszelet", "kep": "https://image-api.nosalty.hu/images/recipes/FU/Le/magyar-sutiszelet.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 3, "nev": "Magyar szelet Csilla konyhájából", "slug": "magyar-szelet-csilla-konyhajabol", "kep": "https://image-api.nosalty.hu/images/recipes/8K/50/magyar-szelet-csilla-konyhajabol.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 4, "nev": "Méteres sütemény", "slug": "meteres-sutemeny", "kep": "https://image-api.nosalty.hu/images/recipes/Fk/yj/meteres-sutemeny.jpeg?w=320", "video": true, "hozzavalo": 13}, {"poz": 5, "nev": "Kétszínű sütemény", "slug": "ketszinu-sutemeny", "kep": "https://image-api.nosalty.hu/images/recipes/ti/PR/ketszinu-sutemeny.jpeg?w=320", "video": false, "hozzavalo": 10}]}, {"id": 35, "query": "sparga kremleves", "volumen": 1, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Pezsgős spárga-újhagyma krémleves cipóban sajttal és snidlinggel", "slug": "pezsgos-sparga-ujhagyma-kremleves-cipoban-sajttal-snidlinggel", "kep": "https://image-api.nosalty.hu/images/recipes/cs/oI/pezsgos-sparga-ujhagyma-kremleves-cipoban-sajttal-snidlinggel.jpeg?w=320", "video": false, "hozzavalo": 17}, {"poz": 2, "nev": "Sültspárga-krémleves", "slug": "sult-sparga-kremleves", "kep": "https://image-api.nosalty.hu/images/recipes/XE/yh/sult-sparga-kremleves.jpg?w=320", "video": true, "hozzavalo": 11}, {"poz": 3, "nev": "Spárgakrémleves", "slug": "spargakremleves", "kep": "https://image-api.nosalty.hu/images/recipes/rQ/bQ/spargakremleves.jpeg?w=320", "video": true, "hozzavalo": 10}, {"poz": 4, "nev": "Spárgakrémleves vichyssoise módra", "slug": "spargakremleves-vichyssoise", "kep": "https://image-api.nosalty.hu/images/recipes/lV/B7/spargakremleves-vichyssoise.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 5, "nev": "Krémes spárgarakottas citromos zsemlemorzsával", "slug": "kremes-sparga-rakottas-citromos-zsemlemorzsaval", "kep": "https://image-api.nosalty.hu/images/recipes/oC/Vv/kremes-sparga-rakottas-citromos-zsemlemorzsaval.jpg?w=320", "video": false, "hozzavalo": 13}]}, {"id": 36, "query": "virsis kifli", "volumen": 1, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Kifli", "slug": "kifli", "kep": "https://image-api.nosalty.hu/images/recipes/SB/Qh/kifli.jpeg?w=320", "video": false, "hozzavalo": 8}, {"poz": 2, "nev": "Virslis kifli", "slug": "virslis-kifli", "kep": "https://image-api.nosalty.hu/images/recipes/Rc/l7/virslis-kifli.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 3, "nev": "Eredeti pozsonyi kiflik", "slug": "eredeti-pozsonyi-kifli-dio-mak-karacsony-edes-kifli-pozsonyi", "kep": "https://image-api.nosalty.hu/images/recipes/5f/jL/eredeti-pozsonyi-kifli-dio-mak-karacsony-edes-kifli-pozsonyi.jpeg?w=320", "video": false, "hozzavalo": 14}, {"poz": 4, "nev": "Ragyogó vajas kiflik", "slug": "ragyogo-vaj-kifli", "kep": "https://image-api.nosalty.hu/images/recipes/TC/Og/ragyogo-vaj-kifli.jpeg?w=320", "video": true, "hozzavalo": 7}, {"poz": 5, "nev": "Havasi kifli", "slug": "havasi-kifli", "kep": "https://image-api.nosalty.hu/images/recipes/kx/8F/havasi-kifli.jpeg?w=320", "video": false, "hozzavalo": 13}]}, {"id": 37, "query": "omlos sajtos rud", "volumen": 1, "tipus": "ÉTELNÉV", "sav": "farok", "talalatok": [{"poz": 1, "nev": "A legfinomabb - de egyszerű - omlós sajtos rúd", "slug": "legfinomabb-egyszeru-omlos-sajtos-rud", "kep": "https://image-api.nosalty.hu/images/recipes/lT/lm/legfinomabb-egyszeru-omlos-sajtos-rud.jpg?w=320", "video": true, "hozzavalo": 12}, {"poz": 2, "nev": "Omlós sajtos ZsuZsiii konyhájából", "slug": "omlos-sajtos-zsuzsiii-konyhajabol", "kep": "https://image-api.nosalty.hu/images/recipes/2P/S6/omlos-sajtos-zsuzsiii-konyhajabol.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 3, "nev": "Omlós sajtos rudacskák Sziszike konyhájából", "slug": "omlos-sajtos-rudacskak-sziszike-konyhajabol", "kep": "https://image-api.nosalty.hu/images/recipes/SC/47/omlos-sajtos-rudacskak-sziszike-konyhajabol.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 4, "nev": "Omlós sajtos rudacskák Ketryntől", "slug": "omlos-sajtos-rudacskak-ketryntol", "kep": "https://image-api.nosalty.hu/images/recipes/zM/Z9/omlos-sajtos-rudacskak-ketryntol.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 5, "nev": "Omlós, egyszerű, gyors, vajas-sajtos rudacskák", "slug": "omlos-egyszeru-gyors-vajas-sajtos-rudacskak", "kep": "https://image-api.nosalty.hu/images/recipes/Xr/lD/omlos-egyszeru-gyors-vajas-sajtos-rudacskak.jpeg?w=320", "video": false, "hozzavalo": 7}]}, {"id": 38, "query": "sárgaborsó", "volumen": 1, "tipus": "ALAPANYAG", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Kókuszos sárgaborsó-főzelék", "slug": "kokuszos-sargaborso-fozelek", "kep": "https://image-api.nosalty.hu/images/recipes/OD/e2/kokuszos-sargaborso-fozelek.jpeg?w=320", "video": true, "hozzavalo": 13}, {"poz": 2, "nev": "Spenótos sárgaborsó-főzelék fűszeresen", "slug": "spenotos-sargaborso-fozelek-fuszeresen", "kep": "https://image-api.nosalty.hu/images/recipes/wA/Om/spenotos-sargaborso-fozelek-fuszeresen.jpeg?w=320", "video": false, "hozzavalo": 13}, {"poz": 3, "nev": "Currys sárgaborsó-főzelék", "slug": "currys-sargaborso-fozelek", "kep": "https://image-api.nosalty.hu/images/recipes/mr/fr/currys-sargaborso-fozelek.jpeg?w=320", "video": true, "hozzavalo": 13}, {"poz": 4, "nev": "Szerecsendiós sárgaborsó-krémleves", "slug": "szerecsendios-sargaborso-kremleves", "kep": "https://image-api.nosalty.hu/images/recipes/qQ/gv/szerecsendios-sargaborso-kremleves.jpeg?w=320", "video": false, "hozzavalo": 14}, {"poz": 5, "nev": "Sárgaborsó főzelék 3.", "slug": "sargaborso-fozelek-3", "kep": "https://image-api.nosalty.hu/images/recipes/WG/nc/sargaborso-fozelek-3.jpeg?w=320", "video": false, "hozzavalo": 9}]}, {"id": 39, "query": "gluténmentes kekesz", "volumen": 1, "tipus": "SZŰRÉS", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Gluténmentes kókuszkeksz", "slug": "glutenmentes-kokuszkeksz", "kep": "https://image-api.nosalty.hu/images/recipes/1U/nj/glutenmentes-kokuszkeksz.jpeg?w=320", "video": false, "hozzavalo": 7}, {"poz": 2, "nev": "Gluténmentes mézeskalács", "slug": "glutenmentes-mezeskalacs", "kep": "https://image-api.nosalty.hu/images/recipes/cF/9O/glutenmentes-mezeskalacs.jpg?w=320", "video": false, "hozzavalo": 12}, {"poz": 3, "nev": "Gluténmentes keksztekercs", "slug": "glutenmentes-keksztekercs", "kep": "https://image-api.nosalty.hu/images/recipes/E3/F8/glutenmentes-keksztekercs.jpeg?w=320", "video": false, "hozzavalo": 11}, {"poz": 4, "nev": "Piskótatekercs - gluténmentes", "slug": "piskotatekercs-glutenmentes", "kep": "https://image-api.nosalty.hu/images/recipes/iz/yK/piskotatekercs-glutenmentes.jpeg?w=320", "video": false, "hozzavalo": 9}, {"poz": 5, "nev": "Gluténmentes szendvicskenyér", "slug": "glutenmentes-szendvicskenyer", "kep": "https://image-api.nosalty.hu/images/recipes/Ab/El/glutenmentes-szendvicskenyer.jpeg?w=320", "video": false, "hozzavalo": 8}]}, {"id": 40, "query": "kinai teszta", "volumen": 1, "tipus": "SZŰRÉS", "sav": "farok", "talalatok": [{"poz": 1, "nev": "Kínai pirított tészta csirkével", "slug": "kinai-piritott-teszta-csirkevel", "kep": "https://image-api.nosalty.hu/images/recipes/tG/1o/kinai-piritott-teszta-csirkevel.jpeg?w=320", "video": true, "hozzavalo": 14}, {"poz": 2, "nev": "Csirkés kínai pirított tészta", "slug": "csirkes-kinai-piritott-teszta", "kep": "https://image-api.nosalty.hu/images/recipes/m2/MT/csirkes-kinai-piritott-teszta.jpg?w=320", "video": true, "hozzavalo": 14}, {"poz": 3, "nev": "10 perces kínai tészta", "slug": "10-perces-kinai-teszta", "kep": "https://image-api.nosalty.hu/images/recipes/AN/Hy/10-perces-kinai-teszta.jpeg?w=320", "video": false, "hozzavalo": 10}, {"poz": 4, "nev": "Kínai tészta, ahogy a büfében készül", "slug": "kinai-teszta-ahogy-bufeben-keszul", "kep": "https://image-api.nosalty.hu/images/recipes/RI/oJ/kinai-teszta-ahogy-bufeben-keszul.jpg?w=320", "video": true, "hozzavalo": 9}, {"poz": 5, "nev": "Kínai tészta vegetáriánusoknak is", "slug": "kinai-teszta-vegetarianusoknak", "kep": "https://image-api.nosalty.hu/images/recipes/fs/oU/kinai-teszta-vegetarianusoknak.jpeg?w=320", "video": false, "hozzavalo": 11}]}];
+</script>
+<script>
+const A = window.TESZT_ADAT;
+const OKOK = [
+  ['nev',   'A recept neve stimmelt'],
+  ['kep',   'A kép tetszett'],
+  ['mind',  'Mindkettő'],
+  ['egyik', 'Egyik sem — csak tippeltem']
+];
+let i = 0, nev = '', valasz = {}, kezdet = null, qkezdet = null;
+
+/* ---- SZAKASZOK: négy tízes blokk ---- */
+const SZAKASZ = [
+  {tol:0,  ig:9,  cim:'1. szakasz — a leggyakoribb keresések'},
+  {tol:10, ig:19, cim:'2. szakasz — gyakori keresések'},
+  {tol:20, ig:29, cim:'3. szakasz — ritkább keresések'},
+  {tol:30, ig:39, cim:'4. szakasz — a legritkább keresések'}
+];
+const SZUNET = [
+  {ikon:'&#127881;', cim:'Megvan az első tíz!',
+   szov:'Jól haladsz. A következő szakaszban valamivel ritkább kereséseket ' +
+         'látsz majd — ugyanígy kell megítélni őket.'},
+  {ikon:'&#128170;', cim:'Túl vagy a felén',
+   szov:'Húsz keresés kész, húsz van hátra. Ha most szünetet tartanál, ' +
+         'nyugodtan zárd be — a válaszaid megmaradnak, és később folytathatod.'},
+  {ikon:'&#127939;', cim:'Már csak tíz maradt',
+   szov:'A hátralévő keresések a legritkábbak közül valók — gyakran ' +
+         'elgépelések vagy nagyon egyedi kérések. Itt a legérdekesebb, ' +
+         'hogy mit kezd velük a kereső.'}
+];
+function szakaszIdx(k){
+  for (let n = 0; n < SZAKASZ.length; n++)
+    if (k >= SZAKASZ[n].tol && k <= SZAKASZ[n].ig) return n;
+  return 0;
+}
+
+const T = 'nosalty_kereso_teszt_v1';
+try { const m = localStorage.getItem(T);
+      if (m) { const p = JSON.parse(m); valasz = p.valasz || {}; nev = p.nev || '';
+               kezdet = p.kezdet || null; } } catch(e){}
+
+/* Minden kattintás után azonnal ment — több rétegben, hogy ne vesszen el. */
+function ment(){
+  const cs = JSON.stringify({nev, valasz, kezdet, ido:Date.now(), v:1});
+  try { localStorage.setItem(T, cs); } catch(e){
+    try { sessionStorage.setItem(T, cs); } catch(e2){}
+  }
+}
+
+function indit(){
+  nev = (document.getElementById('nev').value || '').trim() || 'névtelen';
+  if (!kezdet) kezdet = Date.now();
+  ment();
+  document.getElementById('bevezeto').classList.add('rejt');
+  document.getElementById('lablec').classList.remove('rejt');
+  // az első megválaszolatlan kérdésre ugrunk
+  i = 0;
+  for (let k = 0; k < A.length; k++) { if (!kesz(k)) { i = k; break; } }
+  if (A.every((_,k) => kesz(k))) { vege(); return; }
+  rajzol();
+}
+
+/* ---- SZAKASZ-SZÜNET ---- */
+function szunetMutat(n){
+  const sz = SZUNET[n];
+  if (!sz) { tovabbLep(); return; }
+  const kesz_db = A.filter((_,k) => kesz(k)).length;
+  let h = '<div class="ikon">' + sz.ikon + '</div>';
+  h += '<h2>' + sz.cim + '</h2>';
+  h += '<p>' + sz.szov + '</p>';
+  h += '<div class="szunetsav"><div class="pontok">';
+  SZAKASZ.forEach((_, k) => {
+    const cls = k <= n ? 'kesz' : (k === n+1 ? 'most' : '');
+    h += '<div class="pont ' + cls + '"></div>';
+  });
+  h += '</div><div class="haladszam">' + kesz_db + ' / ' + A.length +
+       ' keresés kész</div></div>';
+  h += '<button class="fogomb" onclick="szunetTovabb()">Folytatom</button>';
+  h += '<p style="margin-top:18px;font-size:13px;color:var(--subtle)">' +
+       'Ha most abbahagynád, bezárhatod az oldalt — a válaszaid megmaradnak.</p>';
+  const e = document.getElementById('szunet');
+  e.innerHTML = h;
+  document.getElementById('kerdes').classList.add('rejt');
+  document.getElementById('lablec').classList.add('rejt');
+  e.classList.remove('rejt');
+  window.scrollTo({top:0});
+}
+function szunetTovabb(){
+  document.getElementById('szunet').classList.add('rejt');
+  document.getElementById('lablec').classList.remove('rejt');
+  tovabbLep();
+}
+function tovabbLep(){ i++; rajzol(); }
+function vege(){
+  document.getElementById('kerdes').classList.add('rejt');
+  document.getElementById('szunet').classList.add('rejt');
+  document.getElementById('lablec').classList.add('rejt');
+  document.getElementById('vege').classList.remove('rejt');
+  window.scrollTo({top:0});
+}
+
+function kesz(idx){
+  const v = valasz[A[idx].query];
+  if (!v) return false;
+  if (!v.ok) return false;
+  return A[idx].talalatok.every(t => v.itelet && v.itelet[t.poz] !== undefined);
+}
+
+function rajzol(){
+  const q = A[i];
+  const v = valasz[q.query] || {itelet:{}, ok:null};
+  qkezdet = Date.now();
+  let h = '<div class="kerdes">';
+  h += '<div class="kszam">' + (i+1) + ' / ' + A.length + '</div>';
+  h += '<div class="kszoveg">„' + esc(q.query) + '"</div>';
+  h += '<div class="kalcim">Képzeld el, hogy ezt írtad be a keresőbe. Melyik találat lenne jó neked?</div>';
+  q.talalatok.forEach(t => {
+    const it = v.itelet[t.poz];
+    const cls = it === 'jo' ? ' jo' : (it === 'nem' ? ' nem' : '');
+    h += '<div class="tal' + cls + '">';
+    h += '<img src="' + esc(t.kep||'') + '" alt="" loading="lazy" ' +
+         'onerror="this.style.visibility=\'hidden\'">';
+    h += '<div class="talkozep">';
+    h += '<div class="talpoz">' + t.poz + '. találat</div>';
+    h += '<div class="talnev">' + esc(t.nev||'') + '</div>';
+    const m = [];
+    if (t.hozzavalo) m.push(t.hozzavalo + ' hozzávaló');
+    if (t.video) m.push('videós');
+    h += '<div class="talmeta">' + m.join(' · ') + '</div>';
+    h += '</div>';
+    h += '<div class="gombok">';
+    h += '<button class="gomb' + (it==='jo'?' akt-jo':'') + '" ' +
+         'onclick="itel(' + t.poz + ',\'jo\')">Jó</button>';
+    h += '<button class="gomb' + (it==='nem'?' akt-nem':'') + '" ' +
+         'onclick="itel(' + t.poz + ',\'nem\')">Nem</button>';
+    h += '</div></div>';
+  });
+  h += '<div class="zaro"><div class="zarocim">Mi alapján döntöttél?</div><div class="valaszok">';
+  OKOK.forEach(o => {
+    h += '<button class="vgomb' + (v.ok===o[0]?' akt':'') + '" ' +
+         'onclick="okValaszt(\'' + o[0] + '\')">' + o[1] + '</button>';
+  });
+  h += '</div></div></div>';
+  const k = document.getElementById('kerdes');
+  k.innerHTML = h; k.classList.remove('rejt');
+  document.getElementById('szunet').classList.add('rejt');
+  document.getElementById('visszagomb').style.visibility = i === 0 ? 'hidden' : 'visible';
+  frissit();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function itel(poz, ert){
+  const q = A[i].query;
+  if (!valasz[q]) valasz[q] = {itelet:{}, ok:null};
+  valasz[q].itelet[poz] = (valasz[q].itelet[poz] === ert) ? undefined : ert;
+  if (valasz[q].itelet[poz] === undefined) delete valasz[q].itelet[poz];
+  ment(); rajzol();
+}
+
+function okValaszt(o){
+  const q = A[i].query;
+  if (!valasz[q]) valasz[q] = {itelet:{}, ok:null};
+  valasz[q].ok = (valasz[q].ok === o) ? null : o;
+  valasz[q].mp = Math.round((Date.now() - qkezdet)/1000);
+  ment(); rajzol();
+}
+
+function frissit(){
+  const n = A.filter((_,k) => kesz(k)).length;
+  document.getElementById('sav').style.width = (n/A.length*100) + '%';
+  const sz = szakaszIdx(i);
+  document.getElementById('szakaszcim').textContent = SZAKASZ[sz].cim;
+  const hatra = A.length - n;
+  let szoveg = n + ' / ' + A.length + ' kész';
+  if (n > 0 && hatra > 0 && hatra <= 5) szoveg += ' — már csak ' + hatra + ' van hátra!';
+  document.getElementById('haladszam').textContent = szoveg;
+  const t = document.getElementById('tovabbgomb');
+  const van = kesz(i);
+  t.disabled = !van;
+  t.textContent = (i === A.length-1) ? 'Befejezem' : 'Tovább';
+  document.getElementById('allapot').textContent =
+    van ? '' : 'Jelöld meg mind az 5 találatot és a döntés okát';
+}
+
+function tovabb(){
+  if (!kesz(i)) return;
+  if (i === A.length-1){ vege(); return; }
+  // szakaszhatár? -> szünet
+  const sz = szakaszIdx(i);
+  if (i === SZAKASZ[sz].ig && sz < SZUNET.length){ szunetMutat(sz); return; }
+  tovabbLep();
+}
+function vissza(){ if (i > 0){ i--; rajzol(); } }
+
+/* ---- BEKÜLDÉS ---- */
+const KULCS = 'f742ca45-00fc-4477-8a6c-c62f0595cdbd';
+
+function osszeallit(){
+  const it = [];
+  A.forEach(q => {
+    const v = valasz[q.query] || {itelet:{}, ok:''};
+    q.talalatok.forEach(t => {
+      it.push([q.id, t.poz, v.itelet[t.poz]==='jo' ? 1 : 0]);
+    });
+  });
+  const okok = {};
+  A.forEach(q => { const v = valasz[q.query]; if (v && v.ok) okok[q.id] = v.ok; });
+  const mp = {};
+  A.forEach(q => { const v = valasz[q.query]; if (v && v.mp) mp[q.id] = v.mp; });
+  return {
+    v: 1,                                   // formátum-verzió
+    nev: nev,
+    kuldve: new Date().toISOString(),
+    percek: kezdet ? Math.round((Date.now()-kezdet)/60000) : null,
+    keszult: A.filter((_,k)=>kesz(k)).length,
+    itelet: it,                             // [query-id, pozíció, 1=jó/0=nem]
+    ok: okok,                               // query-id -> döntés oka
+    mp: mp                                  // query-id -> eltöltött másodperc
+  };
+}
+
+async function bekuld(){
+  const g = document.getElementById('kuldgomb');
+  const vj = document.getElementById('visszajelzes');
+  g.disabled = true; g.textContent = 'Küldés…';
+  vj.classList.add('rejt');
+  const adat = osszeallit();
+  try {
+    if (KULCS === 'f742ca45-00fc-4477-8a6c-c62f0595cdbd') throw new Error('nincs kulcs');
+    const r = await fetch('https://api.web3forms.com/submit', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Accept':'application/json'},
+      body: JSON.stringify({
+        access_key: KULCS,
+        subject: 'Nosalty kereső-teszt — ' + nev,
+        from_name: 'Nosalty kereső-teszt',
+        kitolto: nev,
+        kesz_kerdes: adat.keszult + ' / ' + A.length,
+        eltoltott_perc: adat.percek,
+        VALASZOK_JSON: JSON.stringify(adat)
+      })
+    });
+    const j = await r.json();
+    if (!j.success) throw new Error(j.message || 'ismeretlen hiba');
+    document.getElementById('kuldesdoboz').classList.add('rejt');
+    document.getElementById('vegeszoveg').textContent =
+      'A válaszaid megérkeztek. Köszönjük a segítséget!';
+    vj.innerHTML = '<div style="background:var(--zoldbg);border:1px solid var(--zold);' +
+      'border-radius:8px;padding:14px;color:var(--zold);font-weight:500">' +
+      'Sikeresen elküldve &#10003;</div>';
+    vj.classList.remove('rejt');
+    // a valaszokat MEGTARTJUK — ha barmi gond lenne, meg le lehet tolteni
+    try { const m = JSON.parse(localStorage.getItem(T) || '{}');
+          m.bekuldve = new Date().toISOString();
+          localStorage.setItem(T, JSON.stringify(m)); } catch(e){}
+  } catch(e){
+    g.disabled = false; g.textContent = 'Újra próbálom';
+    vj.innerHTML = '<div style="background:var(--pirosbg);border:1px solid var(--piros);' +
+      'border-radius:8px;padding:14px;color:var(--piros)">' +
+      'Az elküldés nem sikerült. Próbáld újra, vagy töltsd le a válaszokat ' +
+      'az alábbi linkkel, és küldd el emailben.</div>';
+    vj.classList.remove('rejt');
+  }
+}
+
+function letolt(){
+  const sorok = [['nev','query','volumen','tipus','sav','pozicio','recept','itelet','dontes_oka','masodperc']];
+  A.forEach(q => {
+    const v = valasz[q.query] || {itelet:{}, ok:''};
+    q.talalatok.forEach(t => {
+      sorok.push([nev, q.query, q.volumen, q.tipus, q.sav, t.poz, t.nev,
+                  v.itelet[t.poz]==='jo' ? 'jo' : (v.itelet[t.poz]==='nem' ? 'nem' : ''),
+                  v.ok||'', v.mp||'']);
+    });
+  });
+  const csv = '﻿' + sorok.map(s =>
+    s.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(';')).join('\r\n');
+  const b = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'nosalty_teszt_' + nev.replace(/[^a-zA-Z0-9]/g,'_') + '.csv';
+  a.click();
+}
+
+// ha van mentett allapot, felajanljuk a folytatast
+if (Object.keys(valasz).length > 0){
+  const n = A.filter((_,k)=>kesz(k)).length;
+  if (n > 0){
+    if (nev) document.getElementById('nev').value = nev;
+    const g = document.querySelector('#bevezeto .fogomb');
+    const b = document.getElementById('bevezeto');
+    const p = document.createElement('p');
+    p.style.cssText = 'background:#e8f5e9;border:1px solid #2e7d32;border-radius:8px;' +
+                      'padding:14px;margin-top:8px;color:#2e7d32';
+    if (n >= A.length){
+      p.innerHTML = '<strong>Üdv újra!</strong> Mind a ' + A.length +
+                    ' keresést megítélted. A gombbal az elküldés-képernyőre jutsz.';
+      if (g) g.textContent = 'Tovább az elküldéshez';
+    } else {
+      p.innerHTML = '<strong>Üdv újra!</strong> Van egy félbehagyott kitöltésed — ' +
+                    '<strong>' + n + ' / ' + A.length + '</strong> keresés kész. ' +
+                    'A gombbal onnan folytatod, ahol abbahagytad.';
+      if (g) g.textContent = 'Folytatom';
+    }
+    b.appendChild(p);
+  }
+}
+
+</script>
+</body>
+</html>
