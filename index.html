@@ -69,13 +69,43 @@
   .gomb:hover{background:var(--muted)}
   .gomb.akt-jo{background:var(--zold);border-color:var(--zold);color:#fff}
   .gomb.akt-nem{background:var(--piros);border-color:var(--piros);color:#fff}
-  .megnyit{padding:7px 14px;border:1px solid var(--line);background:var(--base);
-           border-radius:9999px;font-family:var(--pp);font-size:13px;
-           cursor:pointer;color:var(--meta);white-space:nowrap;width:100%;
-           text-align:center;margin-top:2px}
-  .megnyit:hover{background:var(--muted);border-color:var(--meta)}
-  .megnyit.akt{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500}
+  /* a "megnyitnám" oszlop — vizuálisan elválasztva a Jó/Nem-től */
+  .megnyitoszlop{flex-shrink:0;padding-left:14px;margin-left:2px;
+                 border-left:1px dashed var(--line);
+                 display:flex;align-items:center;min-height:92px}
+  .megnyit{width:74px;height:74px;border:2px dashed var(--line);background:var(--base);
+           border-radius:12px;font-family:var(--pp);font-size:12px;line-height:1.25;
+           cursor:pointer;color:var(--subtle);padding:6px;text-align:center}
+  .megnyit:hover{border-color:var(--teal);color:var(--teal);background:#f0fbfb}
+  .megnyit.akt{background:var(--teal);border-color:var(--teal);border-style:solid;
+               color:#fff;font-weight:500}
   .tal.megnyitott{border-color:var(--teal);box-shadow:0 0 0 2px rgba(39,128,144,.18)}
+
+  /* ---- a ket kerdes bemutatasa a bevezetoben ---- */
+  .ketkerdes{display:flex;gap:12px;margin:0 0 16px;flex-wrap:wrap}
+  .kk{flex:1;min-width:240px;display:flex;gap:10px;padding:14px;
+      border-radius:8px;align-items:flex-start}
+  .kk-1{background:var(--zoldbg);border:1px solid var(--zold)}
+  .kk-2{background:#f0fbfb;border:1px solid var(--teal)}
+  .kk-szam{width:24px;height:24px;border-radius:9999px;flex-shrink:0;
+           display:flex;align-items:center;justify-content:center;
+           font-size:13px;font-weight:600;color:#fff}
+  .kk-1 .kk-szam{background:var(--zold)}
+  .kk-2 .kk-szam{background:var(--teal)}
+  .kk-cim{font-weight:600;font-size:15px;margin-bottom:4px}
+  .kk-1 .kk-cim{color:var(--zold)}
+  .kk-2 .kk-cim{color:var(--teal)}
+  .kk-szov{font-size:13px;line-height:1.45}
+
+  /* ---- kerdes-fejlec a talalatok felett ---- */
+  .oszlopfej{display:flex;gap:14px;align-items:flex-end;
+             padding:0 12px 6px;margin-bottom:2px}
+  .of-bal{flex:1}
+  .of-cimke{font-size:11px;font-weight:600;letter-spacing:.6px;
+            text-transform:uppercase}
+  .of-jonem{width:190px;text-align:center;color:var(--zold)}
+  .of-megnyit{width:88px;text-align:center;color:var(--teal);padding-left:14px}
+  @media(max-width:700px){ .oszlopfej{display:none} }
 
   /* ---- zaro kerdes ---- */
   .zaro{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
@@ -130,10 +160,14 @@
         padding:28px;margin:24px 0;text-align:center}
   .vege h2{font-family:var(--ss);font-weight:400;font-size:26px;margin:0 0 12px}
   .rejt{display:none}
-  @media(max-width:560px){
+  @media(max-width:700px){
     .tal{flex-wrap:wrap}
-    .gombok{width:100%;justify-content:flex-start}
     .tal img{width:72px;height:72px}
+    .gombok{max-width:none;justify-content:flex-start;margin-top:8px}
+    .megnyitoszlop{border-left:none;padding-left:0;margin-left:0;
+                   min-height:0;margin-top:8px;width:100%;
+                   border-top:1px dashed var(--line);padding-top:10px}
+    .megnyit{width:100%;height:auto;padding:9px 14px;font-size:13px}
   }
 </style>
 </head>
@@ -157,14 +191,31 @@
     <h1>Segíts megítélni a Nosalty keresőjét</h1>
     <p>Negyven valódi keresést mutatunk, ahogy a felhasználók beírták. Mindegyiknél
        az első öt találat látszik — ugyanaz, amit a kereső ad.</p>
-    <ol>
-      <li>Képzeld el, hogy <strong>te írtad be</strong> azt a keresőszót.</li>
-      <li>Minden találatnál dönts: <strong>passzol-e</strong> a keresőszóhoz.
-          Nem az a kérdés, hogy megfőznéd-e — csak az, hogy azt adja-e,
-          amit kerestél.</li>
-      <li>Két záró kérdés: mi alapján döntöttél, és
-          <strong>melyikre kattintottál volna rá</strong> — ott már az ízlés is számít.</li>
-    </ol>
+    <p><strong>Két külön dolgot kérdezünk minden keresésnél.</strong>
+       Fontos, hogy ne keverd össze őket:</p>
+
+    <div class="ketkerdes">
+      <div class="kk kk-1">
+        <div class="kk-szam">1</div>
+        <div>
+          <div class="kk-cim">Jó találat-e?</div>
+          <div class="kk-szov">Azt adja, amit ezzel a szóval kerestél?
+            <strong>Nem az ízlésedről szól</strong> — lehet, hogy soha nem főznéd meg,
+            mégis jó találat.</div>
+        </div>
+      </div>
+      <div class="kk kk-2">
+        <div class="kk-szam">2</div>
+        <div>
+          <div class="kk-cim">Melyiket nyitnád meg?</div>
+          <div class="kk-szov"><strong>Itt már az ízlésed számít.</strong>
+            Melyikre kattintanál rá tényleg — a kép, a név, bármi alapján.
+            Keresésenként egyet jelölj.</div>
+        </div>
+      </div>
+    </div>
+
+    <p>A kettő gyakran nem ugyanaz — és pont ez a különbség érdekel minket.</p>
     <p>Nincs jó vagy rossz válasz — a te ítéleted érdekel minket.
        Kb. <strong>15–20 perc</strong>, négy rövid szakaszban.</p>
     <p style="background:#f0fbfb;border:1px solid #82d7de;border-radius:8px;
@@ -364,9 +415,10 @@ function rajzol(){
   let h = '<div class="kerdes">';
   h += '<div class="kszam">' + (i+1) + ' / ' + A.length + '</div>';
   h += '<div class="kszoveg">„' + esc(q.query) + '"</div>';
-  h += '<div class="kalcim"><strong>Passzol-e a keresőszóhoz?</strong> ' +
-       'Nem az a kérdés, hogy megfőznéd-e — csak az, hogy ' +
-       'azt adja-e, amit ezzel a szóval kerestél.</div>';
+  h += '<div class="kalcim">Képzeld el, hogy ezt írtad be a Nosalty keresőjébe.</div>';
+  h += '<div class="oszlopfej"><div class="of-bal"></div>' +
+       '<div class="of-cimke of-jonem">Jó találat-e?</div>' +
+       '<div class="of-cimke of-megnyit">Melyiket nyitnád meg?</div></div>';
   q.talalatok.forEach(t => {
     const it = v.itelet[t.poz];
     let cls = it === 'jo' ? ' jo' : (it === 'nem' ? ' nem' : '');
@@ -387,9 +439,13 @@ function rajzol(){
          'onclick="itel(' + t.poz + ',\'jo\')">Jó</button>';
     h += '<button class="gomb' + (it==='nem'?' akt-nem':'') + '" ' +
          'onclick="itel(' + t.poz + ',\'nem\')">Nem</button>';
+    h += '</div>';
+    h += '<div class="megnyitoszlop">';
     h += '<button class="megnyit' + (v.klikk===t.poz?' akt':'') + '" ' +
+         'title="Ezt a receptet nyitnám meg" ' +
          'onclick="klikkValaszt(' + t.poz + ')">' +
-         (v.klikk===t.poz ? '&#10003; ezt nyitnám meg' : 'ezt nyitnám meg') + '</button>';
+         (v.klikk===t.poz ? '&#10003; <span class="mny">ezt nyitnám meg</span>'
+                          : '<span class="mny">ezt nyitnám meg</span>') + '</button>';
     h += '</div></div>';
   });
   h += '<div class="zaro"><div class="zarocim">Mi alapján döntöttél?</div><div class="valaszok">';
@@ -398,10 +454,7 @@ function rajzol(){
          'onclick="okValaszt(\'' + o[0] + '\')">' + o[1] + '</button>';
   });
   h += '</div></div>';
-  h += '<div class="zaro"><div class="zarocim">Melyiket nyitnád meg?</div>' +
-       '<div class="kalcim" style="margin:-4px 0 10px">Kattints a fenti kártyákon az ' +
-       '„ezt nyitnám meg" gombra — <strong>itt már az ízlés is számít</strong>, nem csak ' +
-       'az, hogy passzol-e a keresőszóhoz.</div><div class="valaszok">';
+  h += '<div class="zaro"><div class="valaszok">';
   h += '<button class="vgomb' + (v.klikk===0?' akt':'') + '" ' +
        'onclick="klikkValaszt(0)">Egyiket sem nyitnám meg</button>';
   h += '</div></div></div>';
