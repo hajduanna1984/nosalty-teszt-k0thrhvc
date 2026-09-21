@@ -280,10 +280,10 @@ window.TESZT_ADAT = [{"id": 1, "query": "csirkemell", "volumen": 1121, "tipus": 
 <script>
 const A = window.TESZT_ADAT;
 const OKOK = [
-  ['nev',   'A recept neve stimmelt'],
-  ['kep',   'A kép tetszett'],
-  ['mind',  'Mindkettő'],
-  ['egyik', 'Egyik sem — csak tippeltem']
+  ['kep',   'Főleg a kép'],
+  ['nev',   'Főleg a recept neve'],
+  ['mind',  'Mindkettő egyformán'],
+  ['egyik', 'Egyik sem vonzott']
 ];
 let i = 0, nev = '', valasz = {}, kezdet = null, qkezdet = null, viszSzoveg = {};
 
@@ -316,6 +316,26 @@ const T = 'nosalty_kereso_teszt_v1';
 try { const m = localStorage.getItem(T);
       if (m) { const p = JSON.parse(m); valasz = p.valasz || {}; nev = p.nev || '';
                kezdet = p.kezdet || null; viszSzoveg = p.vissza || {}; } } catch(e){}
+
+/* Régi mentés átalakítása: a korábbi „egy kattintás" (klikk) → találatonkénti
+   megnyit-válaszok. Így aki félbehagyta a régi változatban, nem veszít semmit. */
+(function atalakit(){
+  let volt = false;
+  Object.keys(valasz).forEach(q => {
+    const v = valasz[q];
+    if (v && v.klikk !== undefined && !v.megnyit) {
+      const t = (window.TESZT_ADAT || []).find(x => x.query === q);
+      if (t) {
+        v.megnyit = {};
+        t.talalatok.forEach(x => { v.megnyit[x.poz] = (v.klikk === x.poz) ? 'igen' : 'nem'; });
+        delete v.klikk;
+        volt = true;
+      }
+    }
+  });
+  if (volt) { try { localStorage.setItem(T,
+    JSON.stringify({nev, valasz, vissza: viszSzoveg, kezdet, ido:Date.now(), v:2})); } catch(e){} }
+})();
 
 /* Minden kattintás után azonnal ment — több rétegben, hogy ne vesszen el. */
 function ment(){
@@ -452,7 +472,11 @@ function rajzol(){
          'onclick="megnyitValaszt(' + t.poz + ',\'nem\')">Nem</button>';
     h += '</div></div>';
   });
-  h += '<div class="zaro"><div class="zarocim">Mi alapján döntöttél?</div><div class="valaszok">';
+  h += '<div class="zaro"><div class="zarocim">' +
+       'Amikor eldöntötted, hogy <span style="color:var(--teal)">megnyitnád-e</span> ' +
+       'a recepteket — mi alapján?</div>' +
+       '<div class="kalcim" style="margin:-4px 0 10px">Ez a második kérdésre vonatkozik, ' +
+       'nem arra, hogy passzol-e a keresőszóhoz.</div><div class="valaszok">';
   OKOK.forEach(o => {
     h += '<button class="vgomb' + (v.ok===o[0]?' akt':'') + '" ' +
          'onclick="okValaszt(\'' + o[0] + '\')">' + o[1] + '</button>';
