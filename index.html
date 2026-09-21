@@ -72,13 +72,14 @@
   /* a "megnyitnám" oszlop — vizuálisan elválasztva a Jó/Nem-től */
   .megnyitoszlop{flex-shrink:0;padding-left:14px;margin-left:2px;
                  border-left:1px dashed var(--line);
-                 display:flex;align-items:center;min-height:92px}
-  .megnyit{width:74px;height:74px;border:2px dashed var(--line);background:var(--base);
-           border-radius:12px;font-family:var(--pp);font-size:12px;line-height:1.25;
-           cursor:pointer;color:var(--subtle);padding:6px;text-align:center}
-  .megnyit:hover{border-color:var(--teal);color:var(--teal);background:#f0fbfb}
-  .megnyit.akt{background:var(--teal);border-color:var(--teal);border-style:solid;
-               color:#fff;font-weight:500}
+                 display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;
+                 justify-content:flex-end;max-width:150px}
+  .mgomb{padding:8px 14px;border:1px solid var(--line);background:var(--base);
+         border-radius:9999px;font-family:var(--pp);font-size:14px;
+         cursor:pointer;color:var(--text);white-space:nowrap}
+  .mgomb:hover{background:var(--muted)}
+  .mgomb.akt-igen{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mgomb.akt-nem{background:var(--subtle);border-color:var(--subtle);color:#fff}
   .tal.megnyitott{border-color:var(--teal);box-shadow:0 0 0 2px rgba(39,128,144,.18)}
 
   /* ---- a ket kerdes bemutatasa a bevezetoben ---- */
@@ -165,9 +166,11 @@
     .tal img{width:72px;height:72px}
     .gombok{max-width:none;justify-content:flex-start;margin-top:8px}
     .megnyitoszlop{border-left:none;padding-left:0;margin-left:0;
-                   min-height:0;margin-top:8px;width:100%;
+                   margin-top:8px;width:100%;max-width:none;
+                   justify-content:flex-start;
                    border-top:1px dashed var(--line);padding-top:10px}
-    .megnyit{width:100%;height:auto;padding:9px 14px;font-size:13px}
+    .megnyitoszlop::before{content:'Megnyitnád?';font-size:12px;color:var(--teal);
+                           font-weight:600;width:100%;margin-bottom:-2px}
   }
 </style>
 </head>
@@ -207,10 +210,10 @@
       <div class="kk kk-2">
         <div class="kk-szam">2</div>
         <div>
-          <div class="kk-cim">Melyiket nyitnád meg?</div>
+          <div class="kk-cim">Megnyitnád?</div>
           <div class="kk-szov"><strong>Itt már az ízlésed számít.</strong>
-            Melyikre kattintanál rá tényleg — a kép, a név, bármi alapján.
-            Keresésenként egyet jelölj.</div>
+            Rákattintanál tényleg — a kép, a név, bármi alapján?
+            Akár több találatnál is mondhatsz igent.</div>
         </div>
       </div>
     </div>
@@ -404,8 +407,9 @@ function kesz(idx){
   const v = valasz[A[idx].query];
   if (!v) return false;
   if (!v.ok) return false;
-  if (v.klikk === undefined) return false;
-  return A[idx].talalatok.every(t => v.itelet && v.itelet[t.poz] !== undefined);
+  return A[idx].talalatok.every(t =>
+    v.itelet && v.itelet[t.poz] !== undefined &&
+    v.megnyit && v.megnyit[t.poz] !== undefined);
 }
 
 function rajzol(){
@@ -418,11 +422,11 @@ function rajzol(){
   h += '<div class="kalcim">Képzeld el, hogy ezt írtad be a Nosalty keresőjébe.</div>';
   h += '<div class="oszlopfej"><div class="of-bal"></div>' +
        '<div class="of-cimke of-jonem">Jó találat-e?</div>' +
-       '<div class="of-cimke of-megnyit">Melyiket nyitnád meg?</div></div>';
+       '<div class="of-cimke of-megnyit">Megnyitnád?</div></div>';
   q.talalatok.forEach(t => {
     const it = v.itelet[t.poz];
     let cls = it === 'jo' ? ' jo' : (it === 'nem' ? ' nem' : '');
-    if (v.klikk === t.poz) cls += ' megnyitott';
+    if (v.megnyit && v.megnyit[t.poz] === 'igen') cls += ' megnyitott';
     h += '<div class="tal' + cls + '">';
     h += '<img src="' + esc(t.kep||'') + '" alt="" loading="lazy" ' +
          'onerror="this.style.visibility=\'hidden\'">';
@@ -440,12 +444,12 @@ function rajzol(){
     h += '<button class="gomb' + (it==='nem'?' akt-nem':'') + '" ' +
          'onclick="itel(' + t.poz + ',\'nem\')">Nem</button>';
     h += '</div>';
+    const mny = v.megnyit ? v.megnyit[t.poz] : undefined;
     h += '<div class="megnyitoszlop">';
-    h += '<button class="megnyit' + (v.klikk===t.poz?' akt':'') + '" ' +
-         'title="Ezt a receptet nyitnám meg" ' +
-         'onclick="klikkValaszt(' + t.poz + ')">' +
-         (v.klikk===t.poz ? '&#10003; <span class="mny">ezt nyitnám meg</span>'
-                          : '<span class="mny">ezt nyitnám meg</span>') + '</button>';
+    h += '<button class="mgomb' + (mny==='igen'?' akt-igen':'') + '" ' +
+         'onclick="megnyitValaszt(' + t.poz + ',\'igen\')">Megnyitnám</button>';
+    h += '<button class="mgomb' + (mny==='nem'?' akt-nem':'') + '" ' +
+         'onclick="megnyitValaszt(' + t.poz + ',\'nem\')">Nem</button>';
     h += '</div></div>';
   });
   h += '<div class="zaro"><div class="zarocim">Mi alapján döntöttél?</div><div class="valaszok">';
@@ -454,10 +458,7 @@ function rajzol(){
          'onclick="okValaszt(\'' + o[0] + '\')">' + o[1] + '</button>';
   });
   h += '</div></div>';
-  h += '<div class="zaro"><div class="valaszok">';
-  h += '<button class="vgomb' + (v.klikk===0?' akt':'') + '" ' +
-       'onclick="klikkValaszt(0)">Egyiket sem nyitnám meg</button>';
-  h += '</div></div></div>';
+  h += '</div>';
   const k = document.getElementById('kerdes');
   k.innerHTML = h; k.classList.remove('rejt');
   document.getElementById('szunet').classList.add('rejt');
@@ -485,11 +486,13 @@ function okValaszt(o){
   ment(); rajzol();
 }
 
-function klikkValaszt(p){
+function megnyitValaszt(poz, ert){
   const q = A[i].query;
   if (!valasz[q]) valasz[q] = {itelet:{}, ok:null};
-  valasz[q].klikk = (valasz[q].klikk === p) ? undefined : p;
-  if (valasz[q].klikk === undefined) delete valasz[q].klikk;
+  if (!valasz[q].megnyit) valasz[q].megnyit = {};
+  const m = valasz[q].megnyit;
+  m[poz] = (m[poz] === ert) ? undefined : ert;
+  if (m[poz] === undefined) delete m[poz];
   ment(); rajzol();
 }
 
@@ -508,11 +511,12 @@ function frissit(){
   t.textContent = (i === A.length-1) ? 'Befejezem' : 'Tovább';
   let hiany = '';
   if (!van){
-    const v = valasz[A[i].query] || {itelet:{}};
-    const n = A[i].talalatok.filter(t => v.itelet && v.itelet[t.poz] !== undefined).length;
-    if (n < 5) hiany = 'Még ' + (5-n) + ' találatot jelölj meg';
-    else if (!v.ok) hiany = 'Válaszd ki, mi alapján döntöttél';
-    else hiany = 'Válaszd ki, melyikre kattintanál';
+    const v = valasz[A[i].query] || {itelet:{}, megnyit:{}};
+    const n1 = A[i].talalatok.filter(t => v.itelet && v.itelet[t.poz] !== undefined).length;
+    const n2 = A[i].talalatok.filter(t => v.megnyit && v.megnyit[t.poz] !== undefined).length;
+    if (n1 < 5) hiany = 'Még ' + (5-n1) + ' helyen hiányzik a „Jó találat-e?" válasz';
+    else if (n2 < 5) hiany = 'Még ' + (5-n2) + ' helyen hiányzik a „Megnyitnám?" válasz';
+    else hiany = 'Válaszd ki, mi alapján döntöttél';
   }
   document.getElementById('allapot').textContent = hiany;
 }
@@ -533,29 +537,30 @@ const KULCS = 'f742ca45-00fc-4477-8a6c-c62f0595cdbd';
 function osszeallit(){
   const it = [];
   A.forEach(q => {
-    const v = valasz[q.query] || {itelet:{}, ok:''};
+    const v = valasz[q.query] || {itelet:{}, megnyit:{}, ok:''};
     q.talalatok.forEach(t => {
-      it.push([q.id, t.poz, v.itelet[t.poz]==='jo' ? 1 : 0]);
+      const m = v.megnyit || {};
+      it.push([q.id, t.poz,
+               v.itelet[t.poz]==='jo' ? 1 : 0,      // jó találat-e
+               m[t.poz]==='igen' ? 1 : 0]);         // megnyitná-e
     });
   });
-  const okok = {}, mp = {}, klikk = {};
+  const okok = {}, mp = {};
   A.forEach(q => {
     const v = valasz[q.query]; if (!v) return;
     if (v.ok) okok[q.id] = v.ok;
     if (v.mp) mp[q.id] = v.mp;
-    if (v.klikk !== undefined) klikk[q.id] = v.klikk;
   });
   return {
-    v: 3,                                   // formátum-verzió
+    v: 4,                                   // formátum-verzió
     nev: nev,
     kuldve: new Date().toISOString(),
     percek: kezdet ? Math.round((Date.now()-kezdet)/60000) : null,
     keszult: A.filter((_,k)=>kesz(k)).length,
-    itelet: it,                             // [query-id, pozíció, 1=jó/0=nem]
-    ok: okok,                               // query-id -> döntés oka
-    klikk: klikk,                           // query-id -> melyiket nyitná meg (0 = egyiket sem)
-    mp: mp,                                 // query-id -> eltöltött másodperc
-    vissza: viszSzoveg                      // szakasz-index (0,1,2) és 'vege' -> szöveg
+    itelet: it,                    // [query-id, pozíció, jó(1/0), megnyitná(1/0)]
+    ok: okok,                      // query-id -> döntés oka
+    mp: mp,                        // query-id -> eltöltött másodperc
+    vissza: viszSzoveg             // szakasz-index (0,1,2) és 'vege' -> szöveg
   };
 }
 
@@ -608,14 +613,15 @@ async function bekuld(){
 }
 
 function letolt(){
-  const sorok = [['nev','query','volumen','tipus','sav','pozicio','recept','itelet',
-                  'rakattintana','dontes_oka','masodperc']];
+  const sorok = [['nev','query','volumen','tipus','sav','pozicio','recept','jo_talalat',
+                  'megnyitna','dontes_oka','masodperc']];
   A.forEach(q => {
-    const v = valasz[q.query] || {itelet:{}, ok:''};
+    const v = valasz[q.query] || {itelet:{}, megnyit:{}, ok:''};
+    const m = v.megnyit || {};
     q.talalatok.forEach(t => {
       sorok.push([nev, q.query, q.volumen, q.tipus, q.sav, t.poz, t.nev,
                   v.itelet[t.poz]==='jo' ? 'jo' : (v.itelet[t.poz]==='nem' ? 'nem' : ''),
-                  v.klikk === t.poz ? 'igen' : '',
+                  m[t.poz]==='igen' ? 'igen' : (m[t.poz]==='nem' ? 'nem' : ''),
                   v.ok||'', v.mp||'']);
     });
   });
