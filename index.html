@@ -61,13 +61,21 @@
   .talpoz{font-size:11px;color:var(--subtle);margin-bottom:2px}
   .talnev{font-family:var(--ss);font-size:17px;line-height:1.25;margin-bottom:6px}
   .talmeta{font-size:12px;color:var(--meta)}
-  .gombok{display:flex;gap:8px;flex-shrink:0}
+  .gombok{display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;
+          justify-content:flex-end;max-width:190px}
   .gomb{padding:8px 16px;border:1px solid var(--line);background:var(--base);
         border-radius:9999px;font-family:var(--pp);font-size:14px;
         cursor:pointer;color:var(--text);white-space:nowrap}
   .gomb:hover{background:var(--muted)}
   .gomb.akt-jo{background:var(--zold);border-color:var(--zold);color:#fff}
   .gomb.akt-nem{background:var(--piros);border-color:var(--piros);color:#fff}
+  .megnyit{padding:7px 14px;border:1px solid var(--line);background:var(--base);
+           border-radius:9999px;font-family:var(--pp);font-size:13px;
+           cursor:pointer;color:var(--meta);white-space:nowrap;width:100%;
+           text-align:center;margin-top:2px}
+  .megnyit:hover{background:var(--muted);border-color:var(--meta)}
+  .megnyit.akt{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:500}
+  .tal.megnyitott{border-color:var(--teal);box-shadow:0 0 0 2px rgba(39,128,144,.18)}
 
   /* ---- zaro kerdes ---- */
   .zaro{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
@@ -105,6 +113,13 @@
   .pont{width:38px;height:6px;border-radius:9999px;background:var(--muted)}
   .pont.kesz{background:var(--teal)}
   .pont.most{background:var(--meta)}
+  .vissza-doboz{max-width:520px;margin:0 auto 22px;text-align:left}
+  .vissza-cim{font-size:14px;font-weight:500;margin-bottom:6px}
+  .vissza-alcim{font-size:13px;color:var(--subtle);margin-bottom:8px}
+  .vissza-mezo{width:100%;min-height:76px;padding:11px 13px;border:1px solid var(--line);
+               border-radius:8px;font-family:var(--pp);font-size:14px;
+               background:var(--muted);color:var(--text);resize:vertical;line-height:1.45}
+  .vissza-mezo:focus{outline:none;border-color:var(--teal);background:var(--base)}
 
   /* ---- szakasz-jelzo a fejlecben ---- */
   .szakaszcim{font-size:11px;font-weight:500;letter-spacing:1.2px;
@@ -177,6 +192,14 @@
     <h2>Köszönjük!</h2>
     <p id="vegeszoveg">Végigmentél mind a 40 keresésen. Küldd el a válaszaidat
        egy kattintással.</p>
+    <div class="vissza-doboz" id="vegevissza">
+      <div class="vissza-cim">Van bármi egyéb visszajelzésed?</div>
+      <div class="vissza-alcim">Bármi, ami feltűnt a kereső működésében.
+        Nem kötelező, de nagyon hasznos.</div>
+      <textarea class="vissza-mezo" id="viszmezo_vege" style="min-height:96px"
+        placeholder="Pl. mi zavart, mi hiányzott, mi működött jól…"
+        oninput="viszMentVege()"></textarea>
+    </div>
     <div id="kuldesdoboz">
       <button class="fogomb" id="kuldgomb" onclick="bekuld()">Válaszok elküldése</button>
     </div>
@@ -208,7 +231,7 @@ const OKOK = [
   ['mind',  'Mindkettő'],
   ['egyik', 'Egyik sem — csak tippeltem']
 ];
-let i = 0, nev = '', valasz = {}, kezdet = null, qkezdet = null;
+let i = 0, nev = '', valasz = {}, kezdet = null, qkezdet = null, vissza = {};
 
 /* ---- SZAKASZOK: négy tízes blokk ---- */
 const SZAKASZ = [
@@ -238,14 +261,24 @@ function szakaszIdx(k){
 const T = 'nosalty_kereso_teszt_v1';
 try { const m = localStorage.getItem(T);
       if (m) { const p = JSON.parse(m); valasz = p.valasz || {}; nev = p.nev || '';
-               kezdet = p.kezdet || null; } } catch(e){}
+               kezdet = p.kezdet || null; vissza = p.vissza || {}; } } catch(e){}
 
 /* Minden kattintás után azonnal ment — több rétegben, hogy ne vesszen el. */
 function ment(){
-  const cs = JSON.stringify({nev, valasz, kezdet, ido:Date.now(), v:1});
+  const cs = JSON.stringify({nev, valasz, vissza, kezdet, ido:Date.now(), v:2});
   try { localStorage.setItem(T, cs); } catch(e){
     try { sessionStorage.setItem(T, cs); } catch(e2){}
   }
+}
+
+/* A szakasz-szünetek szöveges visszajelzése — gépelés közben ment, nem rajzol újra. */
+let viszIdozito = null;
+function viszMent(n){
+  const e = document.getElementById('viszmezo');
+  if (!e) return;
+  vissza[n] = e.value;
+  clearTimeout(viszIdozito);
+  viszIdozito = setTimeout(ment, 400);
 }
 
 function indit(){
@@ -276,6 +309,13 @@ function szunetMutat(n){
   });
   h += '</div><div class="haladszam">' + kesz_db + ' / ' + A.length +
        ' keresés kész</div></div>';
+  h += '<div class="vissza-doboz">' +
+       '<div class="vissza-cim">Van bármi egyéb visszajelzésed?</div>' +
+       '<div class="vissza-alcim">Ami feltűnt az eddigi keresésekben — bármi, ' +
+       'ami nem fért bele a Jó/Nem válaszba. Nem kötelező.</div>' +
+       '<textarea class="vissza-mezo" id="viszmezo" ' +
+       'placeholder="Pl. „a képek sokat számítottak", „a 4-5. találat mindig gyengébb volt"…"' +
+       '" oninput="viszMent(' + n + ')">' + esc(vissza[n] || '') + '</textarea></div>';
   h += '<button class="fogomb" onclick="szunetTovabb()">Folytatom</button>';
   h += '<p style="margin-top:18px;font-size:13px;color:var(--subtle)">' +
        'Ha most abbahagynád, bezárhatod az oldalt — a válaszaid megmaradnak.</p>';
@@ -297,7 +337,16 @@ function vege(){
   document.getElementById('szunet').classList.add('rejt');
   document.getElementById('lablec').classList.add('rejt');
   document.getElementById('vege').classList.remove('rejt');
+  const m = document.getElementById('viszmezo_vege');
+  if (m && vissza.vege) m.value = vissza.vege;
   window.scrollTo({top:0});
+}
+function viszMentVege(){
+  const e = document.getElementById('viszmezo_vege');
+  if (!e) return;
+  vissza.vege = e.value;
+  clearTimeout(viszIdozito);
+  viszIdozito = setTimeout(ment, 400);
 }
 
 function kesz(idx){
@@ -320,7 +369,8 @@ function rajzol(){
        'azt adja-e, amit ezzel a szóval kerestél.</div>';
   q.talalatok.forEach(t => {
     const it = v.itelet[t.poz];
-    const cls = it === 'jo' ? ' jo' : (it === 'nem' ? ' nem' : '');
+    let cls = it === 'jo' ? ' jo' : (it === 'nem' ? ' nem' : '');
+    if (v.klikk === t.poz) cls += ' megnyitott';
     h += '<div class="tal' + cls + '">';
     h += '<img src="' + esc(t.kep||'') + '" alt="" loading="lazy" ' +
          'onerror="this.style.visibility=\'hidden\'">';
@@ -337,6 +387,9 @@ function rajzol(){
          'onclick="itel(' + t.poz + ',\'jo\')">Jó</button>';
     h += '<button class="gomb' + (it==='nem'?' akt-nem':'') + '" ' +
          'onclick="itel(' + t.poz + ',\'nem\')">Nem</button>';
+    h += '<button class="megnyit' + (v.klikk===t.poz?' akt':'') + '" ' +
+         'onclick="klikkValaszt(' + t.poz + ')">' +
+         (v.klikk===t.poz ? '&#10003; ezt nyitnám meg' : 'ezt nyitnám meg') + '</button>';
     h += '</div></div>';
   });
   h += '<div class="zaro"><div class="zarocim">Mi alapján döntöttél?</div><div class="valaszok">';
@@ -345,15 +398,12 @@ function rajzol(){
          'onclick="okValaszt(\'' + o[0] + '\')">' + o[1] + '</button>';
   });
   h += '</div></div>';
-  h += '<div class="zaro"><div class="zarocim">És melyikre kattintottál volna rá?</div>' +
-       '<div class="kalcim" style="margin:-4px 0 10px">Itt már az ízlés is számít — ' +
-       'melyiket néznéd meg tényleg.</div><div class="valaszok">';
-  q.talalatok.forEach(t => {
-    h += '<button class="vgomb' + (v.klikk===t.poz?' akt':'') + '" ' +
-         'onclick="klikkValaszt(' + t.poz + ')">' + t.poz + '.</button>';
-  });
+  h += '<div class="zaro"><div class="zarocim">Melyiket nyitnád meg?</div>' +
+       '<div class="kalcim" style="margin:-4px 0 10px">Kattints a fenti kártyákon az ' +
+       '„ezt nyitnám meg" gombra — <strong>itt már az ízlés is számít</strong>, nem csak ' +
+       'az, hogy passzol-e a keresőszóhoz.</div><div class="valaszok">';
   h += '<button class="vgomb' + (v.klikk===0?' akt':'') + '" ' +
-       'onclick="klikkValaszt(0)">egyikre sem</button>';
+       'onclick="klikkValaszt(0)">Egyiket sem nyitnám meg</button>';
   h += '</div></div></div>';
   const k = document.getElementById('kerdes');
   k.innerHTML = h; k.classList.remove('rejt');
@@ -443,15 +493,16 @@ function osszeallit(){
     if (v.klikk !== undefined) klikk[q.id] = v.klikk;
   });
   return {
-    v: 2,                                   // formátum-verzió
+    v: 3,                                   // formátum-verzió
     nev: nev,
     kuldve: new Date().toISOString(),
     percek: kezdet ? Math.round((Date.now()-kezdet)/60000) : null,
     keszult: A.filter((_,k)=>kesz(k)).length,
     itelet: it,                             // [query-id, pozíció, 1=jó/0=nem]
     ok: okok,                               // query-id -> döntés oka
-    klikk: klikk,                           // query-id -> melyikre kattintana (0 = egyikre sem)
-    mp: mp                                  // query-id -> eltöltött másodperc
+    klikk: klikk,                           // query-id -> melyiket nyitná meg (0 = egyiket sem)
+    mp: mp,                                 // query-id -> eltöltött másodperc
+    vissza: vissza                          // szakasz-index (0,1,2) és 'vege' -> szöveg
   };
 }
 
@@ -473,6 +524,10 @@ async function bekuld(){
         kitolto: nev,
         kesz_kerdes: adat.keszult + ' / ' + A.length,
         eltoltott_perc: adat.percek,
+        SZOVEGES_VISSZAJELZES: [0,1,2,'vege']
+          .map(k => (vissza[k]||'').trim())
+          .filter(x => x)
+          .join('\n---\n') || '(nincs)',
         VALASZOK_JSON: JSON.stringify(adat)
       })
     });
