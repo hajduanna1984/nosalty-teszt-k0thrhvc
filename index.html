@@ -226,12 +226,17 @@
       <strong>Nyugodtan félbehagyhatod.</strong> Minden válaszod azonnal
       mentődik ebben a böngészőben — ha bezárod és később visszatérsz
       ugyanerre a linkre, onnan folytathatod, ahol abbahagytad.</p>
-    <label for="nev" style="font-size:14px;font-weight:500">Becenév vagy monogram:</label>
+    <label for="nev" style="font-size:14px;font-weight:500">Becenév vagy monogram
+      <span style="color:var(--piros)">*</span></label>
     <input type="text" id="nev" class="nevmezo" placeholder="pl. Panni, K.A., Szerkesztő1"
-           autocomplete="off" maxlength="30">
+           autocomplete="off" maxlength="30" required
+           oninput="nevValtozott()" onkeydown="if(event.key==='Enter')indit()">
+    <p id="nevhiba" class="rejt" style="font-size:13px;color:var(--piros);
+       background:var(--pirosbg);border:1px solid var(--piros);border-radius:8px;
+       padding:10px 12px;margin:-8px 0 12px"></p>
     <p style="font-size:13px;color:var(--subtle);margin:-8px 0 16px">
-      Nem gyűjtünk személyes adatot. Ez csak arra szolgál, hogy a válaszokat
-      meg tudjuk különböztetni egymástól — nem kell valódi név.</p>
+      Nem gyűjtünk személyes adatot, és <strong>nem kell valódi név</strong> —
+      de valamit írj be, hogy a válaszokat szét tudjuk választani egymástól.</p>
     <button class="fogomb" onclick="indit()">Kezdjük</button>
   </div>
 
@@ -345,6 +350,16 @@ function ment(){
   }
 }
 
+/* A becenév-mező hibajelzésének eltüntetése gépelés közben. */
+function nevValtozott(){
+  const h = document.getElementById('nevhiba');
+  const m = document.getElementById('nev');
+  if (h && !h.classList.contains('rejt') && (m.value||'').trim().length >= 2){
+    h.classList.add('rejt');
+    m.style.borderColor = '';
+  }
+}
+
 /* A szakasz-szünetek szöveges visszajelzése — gépelés közben ment, nem rajzol újra. */
 let viszIdozito = null;
 function viszMent(n){
@@ -356,7 +371,20 @@ function viszMent(n){
 }
 
 function indit(){
-  nev = (document.getElementById('nev').value || '').trim() || 'névtelen';
+  const mezo = document.getElementById('nev');
+  const be = (mezo.value || '').trim();
+  const hibaEl = document.getElementById('nevhiba');
+  if (be.length < 2){
+    hibaEl.textContent = 'Kérünk egy becenevet vagy monogramot (legalább 2 karakter) — ' +
+                         'e nélkül nem tudjuk szétválasztani a válaszokat.';
+    hibaEl.classList.remove('rejt');
+    mezo.style.borderColor = 'var(--piros)';
+    mezo.focus();
+    return;
+  }
+  hibaEl.classList.add('rejt');
+  mezo.style.borderColor = '';
+  nev = be;
   if (!kezdet) kezdet = Date.now();
   ment();
   document.getElementById('bevezeto').classList.add('rejt');
